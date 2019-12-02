@@ -45,7 +45,8 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
 
   for(i=0;i<ds.n_values;i++) {
 
-    distance = (float)score(ds.sequences[i],ds.sequences[point]);
+    distance = (float)score(ds.sequences[i],ds.sequences[point],
+			    ds.sequence_lengths[i],ds.sequence_lengths[point]);
 
     if(distance <= epsilon) {
       nb.members[nb.n_members]=i;

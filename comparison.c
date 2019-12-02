@@ -43,10 +43,14 @@ void* silhouette_from_smith_waterman_datasets_thread(void* th) {
     internal = 0.;
     external = 0.;
     for(j=0;j<ds_one->n_values;j++) {
-      internal += (double)score(ds_one->sequences[i],ds_one->sequences[j]);
+      internal += (double)score(ds_one->sequences[i],ds_one->sequences[j],
+				ds_one->sequence_lengths[i],
+				ds_one->sequence_lengths[j]);
     }
     for(j=0;j<ds_two->n_values;j++) {
-      external += (double)score(ds_one->sequences[i],ds_two->sequences[j]);
+      external += (double)score(ds_one->sequences[i],ds_two->sequences[j],
+				ds_one->sequence_lengths[i],
+				ds_two->sequence_lengths[j]);
     }
     
     a=(internal/((double)ds_one->n_values-1.));
@@ -80,7 +84,8 @@ unsigned long* smith_waterman_distances_matrix(dataset ds_one,
     for(j=0;j<ds_two.n_values;j++) {
 
       matrix[i*ds_two.n_values+j] =
-	score(ds_one.sequences[i],ds_two.sequences[j]);
+	score(ds_one.sequences[i],ds_two.sequences[j],
+	      ds_one.sequence_lengths[i],ds_two.sequence_lengths[j]);
     }
   }
 
@@ -97,7 +102,8 @@ double mean_from_smith_waterman_datasets(dataset ds_one, dataset ds_two) {
     for(j=0;j<ds_two.n_values;j++) {
 
       sum+=
-	score(ds_one.sequences[i],ds_two.sequences[j]);
+	score(ds_one.sequences[i],ds_two.sequences[j],
+	      ds_one.sequence_lengths[i], ds_two.sequence_lengths[j]);
     }
   }
   return(sum/((double)ds_one.n_values*(double)ds_two.n_values));
@@ -113,7 +119,9 @@ double sigma_from_smith_waterman_datasets(double mean,
   
   for(i=0;i<ds_one.n_values;i++) {
     for(j=0;j<ds_two.n_values;j++) {
-      v = score(ds_one.sequences[i],ds_two.sequences[j]);
+      v = score(ds_one.sequences[i],ds_two.sequences[j],
+		ds_one.sequence_lengths[i],
+		ds_two.sequence_lengths[j]);
       sigma+=((double)v-(double)mean)*((double)v-(double)mean);
     }
   }

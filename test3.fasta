@@ -1,8 +1,10 @@
 >sequence_test
 TCAGAAAGCTT
 >sequence_test2
-TCAGGGAAAGCTTA
+TCAGGCAAAGCTTA
 >sequence_test3
-TCAGAAAGCTT
+TCAGCAAGCTT
 >sequence_test4
 ACAGAACAGCTT
+>sequence_test5
+TCAGAGCTTA

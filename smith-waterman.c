@@ -13,13 +13,10 @@ static inline int substitute(char a, char b) {
   }
 }
 
-unsigned int score(char* A, char* B) {
+unsigned int score(char* A, char* B, size_t len_a, size_t len_b) {
 
   int i,j,k;
   
-  size_t len_a = strlen(A);
-  size_t len_b = strlen(B);
-
   size_t rank_a = len_a+1;
   size_t rank_b = len_b+1;
   
