@@ -68,10 +68,10 @@ double silhouette_from_smith_waterman_datasets(dataset ds_one,
   
   size_t i,j;
 
-  s_mean = 0;
+  s_mean = 0.;
   for(i=0;i<ds_one.n_values;i++) {
-    internal = 0;
-    external = 0;
+    internal = 0.;
+    external = 0.;
     for(j=0;j<ds_one.n_values;j++) {
       internal += (double)score(ds_one.sequences[i],ds_one.sequences[j]);
     }

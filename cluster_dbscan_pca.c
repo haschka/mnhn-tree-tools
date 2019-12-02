@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     return(1);
   }
 
-  sscanf(argv[3], "lu", &dimensions);
+  sscanf(argv[3], "%lu", &dimensions);
   sscanf(argv[4], "%f", &epsilon);
   sscanf(argv[5], "%i", &minpts);
 
