@@ -1,0 +1,9 @@
+
+*~
+*.[oa]
+bin/*
+*/bin/*
+\#*\#
+.\#*
+auto-save-list
+tramp

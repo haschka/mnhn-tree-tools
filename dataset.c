@@ -123,7 +123,7 @@ dataset dataset_from_fasta(FILE* in) {
       if(sequences > 0) {
 	ds.sequences[sequences-1] =
 	  (char*)realloc(ds.sequences[sequences-1],
-			 sizeof(char)*(sequence_length+1));
+			 sizeof(char)*(ds.sequence_lengths[sequences-1]+1));
       }
 			 						   
       ds.sequences[sequences] = (char*)malloc(sizeof(char)*1001);
@@ -137,10 +137,10 @@ dataset dataset_from_fasta(FILE* in) {
 
       linebuffer_length = strlen(linebuffer);
       ds.sequence_lengths[sequences] += linebuffer_length;
-      if(sequence_length > 1000) {
+      if(ds.sequence_lengths[sequences] > 1000) {
 	ds.sequences[sequences] =
 	  (char*)realloc(ds.sequences[sequences],
-			 sizeof(char)*(sequence_length+1));
+			 sizeof(char)*(ds.sequence_lengths[sequences]+1));
       }
       for(i=0; i < linebuffer_length; i++) {
 	linebuffer[i] = toupper(linebuffer[i]);

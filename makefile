@@ -5,7 +5,7 @@ MATH=-lm
 PTHREAD=-pthread
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
-     cluster_dbscan_kmerL2 cluster_dbscan_SW compareSW
+     cluster_dbscan_kmerL2 cluster_dbscan_SW compareSW silhouette
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -60,5 +60,10 @@ compareSW: compareSW.c dataset.h comparison.h smith_waterman.o comparison.o \
 	$(CC) $(CFLAGS) compareSW.c -o ./bin/compareSW smith_waterman.o \
  comparison.o dataset.o $(MATH)
 
+silhouette: dataset.h comparison.h dataset.h dataset.o comparison.o \
+            smith_waterman.o 
+	$(CC) $(CFLAGS) silhouette.c -o ./bin/silhouette smith_waterman.o \
+ comparison.o dataset.o $(MATH)
+
 clean:
-	rm -r ./bin *.o
+	rm ./bin/* *.o
