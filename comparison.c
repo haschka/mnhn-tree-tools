@@ -2,8 +2,70 @@
 #include<math.h>
 #include<stdio.h>
 #include<limits.h>
+#include<pthread.h>
 #include"dataset.h"
 #include"smith-waterman.h"
+
+typedef struct {
+  dataset* ds_one;
+  dataset* ds_two;
+  size_t id;
+  size_t* incrementor;
+  double* local_sums;
+} thread_handle;
+
+pthread_mutex_t lock;
+
+void* silhouette_from_smith_waterman_datasets_thread(void* th) {
+
+  double internal;
+  double external;
+
+  thread_handle* handle = (thread_handle*)th;
+  
+  dataset* ds_one = handle->ds_one;
+  dataset* ds_two = handle->ds_two;
+  
+  double a,b,s, s_mean;
+
+  size_t i,j;
+
+  s_mean = 0;
+
+ thread_continuition:
+
+  pthread_mutex_lock(&lock);
+  i = handle->incrementor[0];
+  handle->incrementor[0]++;
+  pthread_mutex_unlock(&lock);
+
+  if(i < ds_one->n_values) {
+    internal = 0.;
+    external = 0.;
+    for(j=0;j<ds_one->n_values;j++) {
+      internal += (double)score(ds_one->sequences[i],ds_one->sequences[j]);
+    }
+    for(j=0;j<ds_two->n_values;j++) {
+      external += (double)score(ds_one->sequences[i],ds_two->sequences[j]);
+    }
+    
+    a=(internal/((double)ds_one->n_values-1.));
+    b=(external/((double)ds_two->n_values));
+
+    if(a<b) {
+      s = 1-a/b;
+    } else if(a==b) {
+      s = 0;
+    } else if(a>b) {
+      s = b/a-1;
+    }
+    s_mean += s;
+    goto thread_continuition;
+  }
+
+  handle->local_sums[handle->id] = s_mean;
+}
+  
 
 unsigned long* smith_waterman_distances_matrix(dataset ds_one,
 						dataset ds_two) {
@@ -59,38 +121,45 @@ double sigma_from_smith_waterman_datasets(double mean,
 }
 
 double silhouette_from_smith_waterman_datasets(dataset ds_one,
-					       dataset ds_two) {
+					       dataset ds_two,
+					       size_t n_threads) {
 
   double internal;
   double external;
 
-  double a,b,s, s_mean;
+  double a,b,s, s_mean = 0;
   
   size_t i,j;
 
-  s_mean = 0.;
-  for(i=0;i<ds_one.n_values;i++) {
-    internal = 0.;
-    external = 0.;
-    for(j=0;j<ds_one.n_values;j++) {
-      internal += (double)score(ds_one.sequences[i],ds_one.sequences[j]);
-    }
-    for(j=0;j<ds_two.n_values;j++) {
-      external += (double)score(ds_one.sequences[i],ds_two.sequences[j]);
-    }
-    
-    a=(internal/((double)ds_one.n_values-1.));
-    b=(external/((double)ds_two.n_values));
+  size_t incrementor = 0;
 
-    if(a<b) {
-      s = 1-a/b;
-    } else if(a==b) {
-      s = 0;
-    } else if(a>b) {
-      s = b/a-1;
-    }
-    s_mean += s;
+  pthread_t* thread = (pthread_t*)malloc(sizeof(pthread_t)*n_threads);
+
+  thread_handle* th = (thread_handle*)malloc(sizeof(thread_handle)*n_threads);
+  double* local_sums = (double*)malloc(sizeof(double)*n_threads);
+  
+  for(i=0;i<n_threads;i++) {
+    th[i].ds_one = &ds_one;
+    th[i].ds_two = &ds_two;
+    th[i].id = i;
+    th[i].incrementor = &incrementor;
+    th[i].local_sums = local_sums;
+    
+    pthread_create(thread+i, NULL,
+		   silhouette_from_smith_waterman_datasets_thread, th+i);
   }
+
+  for(i=0;i<n_threads;i++) {
+    pthread_join(thread[i], NULL);
+  }
+  for(i=0;i<n_threads;i++) {
+    s_mean += local_sums[i];
+  }
+
+  free(thread);
+  free(th);
+  free(local_sums);
+  
   return(s_mean/(double)ds_one.n_values);
 }
 

@@ -58,12 +58,12 @@ cluster_dbscan_SW: cluster_dbscan_SW.c dbscan.h dataset.h cluster.h \
 compareSW: compareSW.c dataset.h comparison.h smith_waterman.o comparison.o \
            dataset.o
 	$(CC) $(CFLAGS) compareSW.c -o ./bin/compareSW smith_waterman.o \
- comparison.o dataset.o $(MATH)
+ comparison.o dataset.o $(MATH) $(PTHREAD)
 
 silhouette: dataset.h comparison.h dataset.h dataset.o comparison.o \
             smith_waterman.o 
 	$(CC) $(CFLAGS) silhouette.c -o ./bin/silhouette smith_waterman.o \
- comparison.o dataset.o $(MATH)
+ comparison.o dataset.o $(MATH) $(PTHREAD)
 
 clean:
 	rm ./bin/* *.o

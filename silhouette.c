@@ -8,7 +8,12 @@ int main(int argc, char** argv) {
   FILE* f_one;
   FILE* f_two;
 
+  size_t n_threads;
+  
   dataset ds_one, ds_two;
+
+  sscanf(argv[3],"%lu",&n_threads);
+
   
   f_one = fopen(argv[1], "r");
 
@@ -21,7 +26,7 @@ int main(int argc, char** argv) {
   fclose(f_two);
 
   printf("%lf\n", silhouette_from_smith_waterman_datasets(ds_one,
-							  ds_two));
+							  ds_two, n_threads));
 }
 	 
 

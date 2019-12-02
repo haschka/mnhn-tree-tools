@@ -17,7 +17,8 @@ void shortest_longest_distance_in_matrix(unsigned long* matrix,
 					 dataset ds_two);
 
 double silhouette_from_smith_waterman_datasets(dataset ds_one,
-					       dataset ds_two);
+					       dataset ds_two,
+					       size_t n_threads);
 
 double sigma_from_smith_waterman_datasets(double mean,
 					  dataset ds_one,
