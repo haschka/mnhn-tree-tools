@@ -18,6 +18,13 @@ int main(int argc, char** argv) {
 
   double mean;
   double sigma;
+
+  size_t n_threads;
+
+  if (argc < 3) {
+    printf("Arguments are [fasta1] [fasta2] [n_threads]\n");
+    return(1);
+  }
   
   fasta_one = fopen(argv[1],"r");
 
@@ -28,11 +35,13 @@ int main(int argc, char** argv) {
 
   ds_two = dataset_from_fasta(fasta_two);
   fclose(fasta_two);
+
+  sscanf(argv[3],"%lu",&n_threads);
   
-  matrix = smith_waterman_distances_matrix(ds_one,ds_two);
-  mean = mean_from_smith_waterman_distance_matrix(matrix,ds_one,ds_two);
-  sigma = sigma_from_smith_waterman_distance_matrix(matrix, mean,
-						    ds_one, ds_two);
+  mean = mean_from_smith_waterman_datasets(ds_one,ds_two,n_threads);
+  sigma = sigma_from_smith_waterman_datasets( mean,
+					      ds_one, ds_two,
+					      n_threads);
   printf("mean = %lf, sigma = %lf \n", mean, sigma);
  
 }

@@ -40,13 +40,19 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
   float distance;
   float a_minus_b;
 
+  int* work;
+
   nb.members = (int*)malloc(sizeof(int)*ds.n_values);
   nb.n_members = 0;
 
+  work =
+    (int*)malloc(sizeof(int)*ds.max_sequence_length*ds.max_sequence_length);
+  
   for(i=0;i<ds.n_values;i++) {
 
     distance = (float)score(ds.sequences[i],ds.sequences[point],
-			    ds.sequence_lengths[i],ds.sequence_lengths[point]);
+			    ds.sequence_lengths[i],ds.sequence_lengths[point],
+			    work);
 
     if(distance <= epsilon) {
       nb.members[nb.n_members]=i;
@@ -54,9 +60,9 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
     }
   }
 
-  
   /*  nb.members = (int*)realloc((void*)nb.members,sizeof(int)*nb.n_members); */
   qsort(nb.members,nb.n_members,sizeof(int),compare);
+  free(work);
   return(nb);
 }
 

@@ -13,14 +13,23 @@ static inline int substitute(char a, char b) {
   }
 }
 
-unsigned int score(char* A, char* B, size_t len_a, size_t len_b) {
+unsigned int score(char* A, char* B, size_t len_a, size_t len_b, int* work) {
 
   int i,j,k;
+
+  int free_matrix = 0;
   
   size_t rank_a = len_a+1;
   size_t rank_b = len_b+1;
-  
-  int* matrix = (int*)malloc(sizeof(int)*(rank_a)*(rank_b));
+
+  int* matrix;
+
+  if (work == NULL) {
+    matrix = (int*)malloc(sizeof(int)*(rank_a)*(rank_b));
+    free_matrix = 1;
+  } else {
+    matrix = work;
+  }
 
   int comp[3];
 
@@ -65,8 +74,9 @@ unsigned int score(char* A, char* B, size_t len_a, size_t len_b) {
       }
     }
   }
-
-  free(matrix);
+  if(free_matrix) {
+    free(matrix);
+  }
   return(optimum-max_max);
 }
 

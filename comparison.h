@@ -22,9 +22,8 @@ double silhouette_from_smith_waterman_datasets(dataset ds_one,
 
 double sigma_from_smith_waterman_datasets(double mean,
 					  dataset ds_one,
-					  dataset ds_two);
+					  dataset ds_two,
+					  size_t n_threads);
 
-double mean_from_smith_waterman_datasets(dataset ds_one, dataset ds_two);
-
-
-
+double mean_from_smith_waterman_datasets(dataset ds_one, dataset ds_two,
+					 size_t n_threads);

@@ -8,6 +8,7 @@ typedef struct {
   int n_values; /*!< number of samples in the dataset*/
   float** values; /*!< supplimental data to sequencies, i.e. used for kmers */
   int n_dimensions; /*!< dimensions of supplimental data*/
+  size_t max_sequence_length;
 } dataset;
 
 typedef struct {

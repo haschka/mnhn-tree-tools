@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-g
+CFLAGS=-g -fsanitize=address
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread

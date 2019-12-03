@@ -111,10 +111,11 @@ dataset dataset_from_fasta(FILE* in) {
   ds.n_values = sequences;
 
   sequences = -1;
+
+  ds.max_sequence_length = 0;
   
   while ( -1 != getline(&line, &line_size, in) ) {
-
-
+    
     if ( line[0] == '>') {
       /* new sequence in file */
       sequences++;
@@ -123,7 +124,7 @@ dataset dataset_from_fasta(FILE* in) {
       if(sequences > 0) {
 	ds.sequences[sequences-1] =
 	  (char*)realloc(ds.sequences[sequences-1],
-			 sizeof(char)*(ds.sequence_lengths[sequences-1]+1));
+			 sizeof(char)*(ds.sequence_lengths[sequences-1]+1)); 
       }
 			 						   
       ds.sequences[sequences] = (char*)malloc(sizeof(char)*1001);
@@ -146,6 +147,12 @@ dataset dataset_from_fasta(FILE* in) {
 	linebuffer[i] = toupper(linebuffer[i]);
       }
       strcat(ds.sequences[sequences],linebuffer);
+    }
+    
+  }
+  for(i=0;i<ds.n_values;i++) {
+    if(ds.max_sequence_length < ds.sequence_lengths[i]) {
+      ds.max_sequence_length = ds.sequence_lengths[i];
     }
   }
   free(line);
