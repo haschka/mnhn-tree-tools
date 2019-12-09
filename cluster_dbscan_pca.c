@@ -26,14 +26,15 @@ int main(int argc, char** argv) {
   
   split_set set_of_clusters;
 
-  if(argc < 6) {
+  if(argc < 7) {
     printf("Arguments are: \n"
 	   " [file] Sequences in FASTA \n"
 	   " [file] Corresponding PCA from kmers \n"
 	   " dimensions: dimensions in projections file"
 	   " Epsilon \n"
 	   " minPoints \n"
-	   " output-files prefix \n" );
+	   " output-files prefix (FASTA) \n"
+	   " optional: out-files with values (Projections)\n");
     return(1);
   }
 
@@ -56,6 +57,10 @@ int main(int argc, char** argv) {
 
   if (set_of_clusters.n_clusters < 500) {
     create_cluster_files(argv[6], set_of_clusters, ds);
+    if(argc == 8) {
+      create_cluster_files_with_values(argv[7], set_of_clusters,ds);
+    }
   }
+
 }
   

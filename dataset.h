@@ -16,6 +16,14 @@ typedef struct {
   size_t n_samples;
 } data_shape;
 
+typedef struct {
+  char* sequence;
+  size_t* absolute_frequencies[4];
+  double* relative_frequencies[4];
+  size_t length;
+} consens;
+
+
 dataset dataset_from_fasta(FILE* in);
 void free_dataset(dataset ds);
 void free_values_from_dataset(dataset ds);
@@ -26,3 +34,5 @@ void load_projections_from_file_into_dataset(FILE* projections,
 
 dataset load_kmer_from_file_into_dataset(FILE* in_file, data_shape shape);
 data_shape shape_from_kmer_file(int infile);
+consens obtain_consens_from_dataset(dataset ds);
+void print_consensus_statistics(FILE* f, consens cs);

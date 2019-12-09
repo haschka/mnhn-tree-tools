@@ -35,9 +35,9 @@ void* silhouette_from_smith_waterman_datasets_thread(void* th) {
   int worksize;
 
   if(ds_one->max_sequence_length >= ds_two->max_sequence_length) {
-    worksize = ds_one->max_sequence_length*ds_one->max_sequence_length;
+    worksize = (ds_one->max_sequence_length+1)*(ds_one->max_sequence_length+1);
   } else {
-    worksize = ds_two->max_sequence_length*ds_two->max_sequence_length;
+    worksize = (ds_two->max_sequence_length+1)*(ds_two->max_sequence_length+1);
   }
   work = (int*)malloc(sizeof(int)*worksize);
   
@@ -93,9 +93,9 @@ unsigned long* smith_waterman_distances_matrix(dataset ds_one,
   int* work;
   
   if(ds_one.max_sequence_length >= ds_two.max_sequence_length) {
-    worksize = ds_one.max_sequence_length*ds_one.max_sequence_length;
+    worksize = (ds_one.max_sequence_length+1)*(ds_one.max_sequence_length+1);
   } else {
-    worksize = ds_two.max_sequence_length*ds_two.max_sequence_length;
+    worksize = (ds_two.max_sequence_length+1)*(ds_two.max_sequence_length+1);
   }
   work = (int*)malloc(sizeof(int)*worksize);
   
@@ -126,9 +126,9 @@ void* mean_from_smith_waterman_datasets_thread(void* th) {
   size_t i,j;
 
   if(ds_one->max_sequence_length >= ds_two->max_sequence_length) {
-    worksize = ds_one->max_sequence_length*ds_one->max_sequence_length;
+    worksize = (ds_one->max_sequence_length+1)*(ds_one->max_sequence_length+1);
   } else {
-    worksize = ds_two->max_sequence_length*ds_two->max_sequence_length;
+    worksize = (ds_two->max_sequence_length+1)*(ds_two->max_sequence_length+1);
   }
   work = (int*)malloc(sizeof(int)*worksize);
 
@@ -210,9 +210,9 @@ void* sigma_from_smith_waterman_datasets_thread(void* th) {
   size_t i,j;
 
   if(ds_one->max_sequence_length >= ds_two->max_sequence_length) {
-    worksize = ds_one->max_sequence_length*ds_one->max_sequence_length;
+    worksize = (ds_one->max_sequence_length+1)*(ds_one->max_sequence_length+1);
   } else {
-    worksize = ds_two->max_sequence_length*ds_two->max_sequence_length;
+    worksize = (ds_two->max_sequence_length+1)*(ds_two->max_sequence_length+1);
   }
   work = (int*)malloc(sizeof(int)*worksize);
 

@@ -46,7 +46,8 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
   nb.n_members = 0;
 
   work =
-    (int*)malloc(sizeof(int)*ds.max_sequence_length*ds.max_sequence_length);
+    (int*)malloc(sizeof(int)
+		 *(ds.max_sequence_length+1)*(ds.max_sequence_length+1));
   
   for(i=0;i<ds.n_values;i++) {
 

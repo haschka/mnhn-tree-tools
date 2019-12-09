@@ -18,3 +18,4 @@ typedef struct {
 } split_set;
 
 void create_cluster_files(char* prefix, split_set s, dataset ds);
+void create_cluster_files_with_values(char* prefix, split_set s, dataset ds);

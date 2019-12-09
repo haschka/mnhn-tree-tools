@@ -1,11 +1,11 @@
 CC=gcc
-CFLAGS=-g -fsanitize=address
+CFLAGS=-g
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
-     cluster_dbscan_kmerL2 cluster_dbscan_SW compareSW silhouette
+     cluster_dbscan_kmerL2 cluster_dbscan_SW compareSW silhouette consens
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -65,5 +65,7 @@ silhouette: dataset.h comparison.h dataset.h dataset.o comparison.o \
 	$(CC) $(CFLAGS) silhouette.c -o ./bin/silhouette smith_waterman.o \
  comparison.o dataset.o $(MATH) $(PTHREAD)
 
+consens: consens.c dataset.h dataset.o
+	$(CC) $(CFLAGS) consens.c -o ./bin/consens dataset.o
 clean:
 	rm ./bin/* *.o

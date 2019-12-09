@@ -27,7 +27,7 @@ void char_sequence_to_binary(char* c_seq, char* b_seq, size_t seq_len) {
       bin = 3;
       break;
     default:
-      printf("unhandled character for binary conversion %c", c_seq[i]);
+      printf("unhandled character for binary conversion %c\n", c_seq[i]);
       _exit(1);
     }
 
@@ -286,6 +286,108 @@ void load_projections_from_file_into_dataset(FILE* projections,
 }
 
 
+consens obtain_consens_from_dataset(dataset ds) {
+
+  int i,j;
+  consens cs;
+
+  int bin,val;
+  int maximum;
+
+  cs.sequence = (char*)malloc(sizeof(char)*ds.max_sequence_length);
+  
+  for(i=0;i<4;i++) {
+    cs.absolute_frequencies[i] =
+      (size_t*)malloc(sizeof(size_t)*ds.max_sequence_length);
+    cs.relative_frequencies[i] =
+      (double*)malloc(sizeof(double)*ds.max_sequence_length);
+    memset(cs.absolute_frequencies[i],
+	   0, sizeof(size_t)*ds.max_sequence_length);
+  }
+
+  for(i=0;i<ds.n_values;i++) {
+    for(j=0;j<ds.sequence_lengths[i];j++) {
+      switch(ds.sequences[i][j]) {
+      case 'A':
+	 cs.absolute_frequencies[0][j]++;
+	 break;
+      case 'C':
+	cs.absolute_frequencies[1][j]++;
+	break;
+      case 'G':
+	cs.absolute_frequencies[2][j]++;
+	break;
+      case 'T':
+	cs.absolute_frequencies[3][j]++;
+	break;
+      default:
+	break;
+      }
+    }
+  }
+
+  for(i=0;i<4;i++) {
+    for(j=0;j<ds.max_sequence_length;j++) {
+      cs.relative_frequencies[i][j] =
+	(double)cs.absolute_frequencies[i][j]/(double)ds.n_values;
+    }
+  }
+
+  for(j=0;j<ds.max_sequence_length;j++) {
+    maximum = 0;
+    for(i=0;i<4;i++) {
+      if ( cs.absolute_frequencies[i][j] > maximum ) {
+	maximum = cs.absolute_frequencies[i][j];
+	bin = i;
+      }
+    }
+
+    switch (bin) {
+    case 0:
+      val = 'A';
+      break;
+    case 1:
+      val = 'C';
+      break;
+    case 2:
+      val = 'G';
+      break;
+    case 3:
+      val = 'T';
+      break;
+    default:
+      printf("unhandled integer for consensus convers %c\n", bin);
+      _exit(1);
+    }
+
+    cs.sequence[j] = val;
+  }
+  cs.length = ds.max_sequence_length;
+  return(cs);
+}
+
+void print_consensus_statistics(FILE* f, consens cs) {
+
+  int i;
+
+  fprintf(f,
+	  "Base       A          C          G          T       A       C"
+	  "       G       T\n");
+  
+  for(i=0;i<cs.length;i++) {
+    fprintf(f,"%c %10lu %10lu %10lu %10lu %7.5lf %7.5lf %7.5lf %7.5lf\n",
+	    cs.sequence[i],
+	    cs.absolute_frequencies[0][i],
+	    cs.absolute_frequencies[1][i],
+	    cs.absolute_frequencies[2][i],
+	    cs.absolute_frequencies[3][i],
+
+	    cs.relative_frequencies[0][i],
+	    cs.relative_frequencies[1][i],
+	    cs.relative_frequencies[2][i],
+	    cs.relative_frequencies[3][i]);
+  }
+}
 
 void free_values_from_dataset(dataset ds) {
   int i;
