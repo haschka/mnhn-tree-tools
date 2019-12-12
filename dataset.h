@@ -23,6 +23,14 @@ typedef struct {
   size_t length;
 } consens;
 
+/*! \brief a structure for unique sequences
+ */
+typedef struct {
+  int* u_seq;            /*!< array with indexes to
+                          *    unique sequences in a dataset */
+  int* multiplicities;   /*!< array with the number of duplicates */
+  int n_seq;             /*!< number of unique sequences in dataset */
+} unique_sequences;
 
 dataset dataset_from_fasta(FILE* in);
 void free_dataset(dataset ds);
@@ -36,3 +44,6 @@ dataset load_kmer_from_file_into_dataset(FILE* in_file, data_shape shape);
 data_shape shape_from_kmer_file(int infile);
 consens obtain_consens_from_dataset(dataset ds);
 void print_consensus_statistics(FILE* f, consens cs);
+void sort_unique_sequences(unique_sequences us);
+unique_sequences get_sequence_multiplicities(dataset ds);
+void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
