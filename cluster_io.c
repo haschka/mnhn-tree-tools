@@ -49,13 +49,41 @@ void create_cluster_files_with_values(char* prefix, split_set s, dataset ds) {
   }
 }
 
+int comp_int(const void *a, const void* b) {
+  int* a_i = (int*)a;
+  int* b_i = (int*)b;
+
+  return(a_i[0]-b_i[0]);
+}
+
+static inline int binary_serach(int* array, size_t array_size, int target) {
+
+  int left = 0;
+  int right = array_size - 1;
+  int pos;
+  
+  while( left <= right ) {
+    pos = (left+right)/2;
+    if (array[pos] < target) {
+      left = pos + 1;
+    } else if (array[pos] > target) {
+      right = pos - 1;
+    } else {
+      return pos;
+    }
+  }
+  return -1;
+} 
+
 cluster intersection_of_clusters(cluster a, cluster b) {
 
   cluster big;
   cluster small;
 
   int i, j, count;
+  int search_result;
 
+  
   cluster intersection;
   
   if ( a.n_members >= b.n_members ) {
@@ -69,16 +97,39 @@ cluster intersection_of_clusters(cluster a, cluster b) {
   intersection.members= (int*)malloc(sizeof(int)*small.n_members);
 
   count = 0;
-  for(i = 0 ; i < small.n_members; i++) {
-    for(j = 0; j < big.n_members;j++) {
-      if (small.members[i] == small.members[j]) {
+  if( big.n_members > 20 ) {
+  
+    qsort(big.members, big.n_members, sizeof(int), comp_int);
+
+    for(i = 0 ; i < small.n_members; i++) {
+      
+      search_result = binary_search(big.members,
+				    big.n_members,
+				    small.members[i]);
+
+      if (search_result != -1) {
 	intersection.members[count] = small.members[i];
 	count++;
       }
     }
+    
+  } else {
+
+    for(i = 0 ; i < small.n_members; i++) {
+      for(j = 0; j < big.n_members;j++) {
+	if (small.members[i] == small.members[j]) {
+	  intersection.members[count] = small.members[i];
+	  count++;
+	}
+      }
+    }
+    
   }
   intersection.n_members = count;
   intersection.id = -1;
+  intersection.members = (int*)realloc(intersection.members, sizeof(int)*count);
+
+  return(intersection);
 }
 
 cluster data_not_in_clusters(split_set s, dataset ds) {
