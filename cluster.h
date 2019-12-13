@@ -17,8 +17,14 @@ typedef struct {
   cluster* clusters; /*!< the clusters contained within this set */
 } split_set;
 
+typedef struct {
+  int* connections;
+  int n_connections;
+} cluster_connections;
+
 void create_cluster_files(char* prefix, split_set s, dataset ds);
 void create_cluster_files_with_values(char* prefix, split_set s, dataset ds);
 void create_single_cluster_file(char* filename, cluster cl, dataset ds);
 void create_single_cluster_file_with_values(char* filename, cluster cl,
 					    dataset ds);
+cluster intersection_of_clusters(cluster a, cluster b);

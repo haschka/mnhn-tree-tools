@@ -49,14 +49,14 @@ void create_cluster_files_with_values(char* prefix, split_set s, dataset ds) {
   }
 }
 
-int comp_int(const void *a, const void* b) {
+static inline int comp_int(const void *a, const void* b) {
   int* a_i = (int*)a;
   int* b_i = (int*)b;
 
   return(a_i[0]-b_i[0]);
 }
 
-static inline int binary_serach(int* array, size_t array_size, int target) {
+static inline int binary_search(int* array, size_t array_size, int target) {
 
   int left = 0;
   int right = array_size - 1;
@@ -73,7 +73,43 @@ static inline int binary_serach(int* array, size_t array_size, int target) {
     }
   }
   return -1;
-} 
+}
+
+cluster_connections*
+generate_split_set_relation(split_set ancient, split_set new) {
+
+  int i,j, counter;
+  
+  cluster_connections* connections_ancient_to_new =
+    (cluster_connections*)malloc(sizeof(cluster_connections)*new.n_clusters);
+  
+  cluster intersection;
+  
+  for(i=0;i<new.n_clusters;i++) {
+
+    connections_ancient_to_new[i].connections =
+      (int*)malloc(sizeof(int)*ancient.n_clusters);
+    counter = 0;
+    for(j=0;j<ancient.n_clusters;j++) {
+
+      intersection = intersection_of_clusters(ancient.clusters[j],
+					      new.clusters[i]);
+
+      if ( (double)intersection.n_members >
+	   (double)ancient.clusters[j].n_members*(double)0.8 ) {
+
+	connections_ancient_to_new[i].connections[counter] = j;
+	counter++;
+
+      }
+    }
+    connections_ancient_to_new[i].connections =
+      (int*)realloc(connections_ancient_to_new[i].connections,
+		    sizeof(int)*counter);
+    connections_ancient_to_new[i].n_connections = counter;
+  }
+  return(connections_ancient_to_new);
+}
 
 cluster intersection_of_clusters(cluster a, cluster b) {
 
