@@ -75,7 +75,10 @@ int main(int argc, char** argv) {
 							 new_set_clusters);
     }
 	
-  }while(new_set_clusters.n_cluster != 1)
+  }while(new_set_clusters.n_cluster != 1);
+
+  
+  
 
     
     
