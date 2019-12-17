@@ -1,13 +1,14 @@
 CC=gcc
-#CFLAGS=-g
-CFLAGS=-O2 -march=native -ftree-vectorize -ftree-loop-linear
+CFLAGS=-g
+#CFLAGS=-O2 -march=native -ftree-vectorize -ftree-loop-linear
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
+OPENCL=-lOpenCL
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
-     cluster_dbscan_kmerL2 cluster_dbscan_SW compareSW silhouette consens \
-     sequence_multiplicity
+     cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
+     compareSW silhouette consens sequence_multiplicity adaptive_clustering
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -19,6 +20,9 @@ cluster_io.o: cluster_io.c cluster.h dataset.h binary_array.h
 	$(CC) $(CFLAGS) -c cluster_io.c -o cluster_io.o
 dbscan_SW.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN -o dbscan_SW.o
+dbscan_SW_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
+	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_GPU \
+ -o dbscan_SW_GPU.o
 dbscan_L1.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L1 -o dbscan_L1.o
 dbscan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
@@ -55,6 +59,18 @@ cluster_dbscan_SW: cluster_dbscan_SW.c dbscan.h dataset.h cluster.h \
                    dataset.o cluster_io.o dbscan_SW.o binary_array.o \
                    smith_waterman.o
 	$(CC) $(CFLAGS) cluster_dbscan_SW.c -o ./bin/cluster_dbscan_SW \
+ dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH)
+
+cluster_dbscan_SW_GPU: cluster_dbscan_SW.c dbscan.h dataset.h cluster.h \
+                       dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o
+	$(CC) $(CFLAGS) cluster_dbscan_SW.c -o ./bin/cluster_dbscan_SW_GPU \
+ dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o $(MATH) $(OPENCL) \
+ -D_SCAN_SMITH_WATERMAN_GPU
+
+adaptive_clustering: adaptive_clustering.c  dbscan.h dataset.h cluster.h \
+                     dataset.o cluster_io.o dbscan_SW.o binary_array.o \
+                     smith_waterman.o
+	$(CC) $(CFLAGS) adaptive_clustering.c -o ./bin/adaptive_clustering \
  dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH)
 
 compareSW: compareSW.c dataset.h comparison.h smith_waterman.o comparison.o \

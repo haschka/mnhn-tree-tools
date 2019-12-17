@@ -10,4 +10,5 @@ typedef struct {
 split_set dbscan_L1(dataset ds, float epsilon, int minpts);
 split_set dbscan_L2(dataset ds, float epsilon, int minpts);
 split_set dbscan_SW(dataset ds, float epsilon, int minpts);
+split_set dbscan_SW_GPU(dataset ds, float epsilon, int minpts);
 void create_cluster_files(char* prefix, split_set s, dataset ds);

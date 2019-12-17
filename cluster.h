@@ -17,9 +17,12 @@ typedef struct {
   cluster* clusters; /*!< the clusters contained within this set */
 } split_set;
 
+/*! \brief Structure for storing connections between clusters, i.e. to build
+ *         dodendograms
+ */
 typedef struct {
-  int* connections;
-  int n_connections;
+  int* connections;  /*!< array holding the connections for a single cluster */
+  int n_connections; /*!< the number of connections for a single cluster */
 } cluster_connections;
 
 void create_cluster_files(char* prefix, split_set s, dataset ds);
@@ -28,3 +31,10 @@ void create_single_cluster_file(char* filename, cluster cl, dataset ds);
 void create_single_cluster_file_with_values(char* filename, cluster cl,
 					    dataset ds);
 cluster intersection_of_clusters(cluster a, cluster b);
+cluster data_not_in_clusters(split_set s, dataset ds);
+cluster_connections* generate_split_set_relation(split_set ancient,
+						 split_set new);
+
+
+void store_split_set(char* filename, split_set s);
+void load_split_set(char* filename, split_set*s);

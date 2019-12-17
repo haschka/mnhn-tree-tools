@@ -25,7 +25,6 @@ void create_single_cluster_file_with_values(char* filename, cluster cl,
   fclose(f);
 }
 
-
 void create_cluster_files_with_values(char* prefix, split_set s, dataset ds) {
 
   int i,j,k;

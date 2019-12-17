@@ -39,9 +39,13 @@ int main(int argc, char** argv) {
   if ( NULL == (fasta_f = fopen(argv[1], "r"))) file_error(argv[1]);
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
-  
-  set_of_clusters = dbscan_SW(ds, epsilon, minpts);
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  set_of_clusters = dbscan_SW_GPU(ds, epsilon, minpts);
+#else
+  set_of_clusters = dbscan_SW(ds, epsilon, minpts);
+#endif
+  
   printf("%u clusters obtained \n", set_of_clusters.n_clusters);
 
   if (set_of_clusters.n_clusters < 500) {

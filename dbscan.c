@@ -11,6 +11,17 @@
 #include"cluster.h"
 #include"dbscan.h"
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#ifdef __APPLE__
+#include<OpenCL/OpenCL.h>
+#else
+#include<CL/opencl.h>
+#endif
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
 #if defined(_SCAN_SMITH_WATERMAN)
 #include"smith-waterman.h"
 #endif
@@ -21,13 +32,253 @@
 #include<xmmintrin.h>
 #endif
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+typedef struct {
+  cl_command_queue* cmdq;
+  cl_kernel* kernel;
+  cl_context* contexts;
+  cl_mem* acc_sequences;
+  cl_mem* acc_sequence_lengths;
+  cl_mem* acc_distances;
+  int * local_distances;
+  int num_devs;
+} opencl_stuff;
+
+char* load_program_source(const char* filename) {
+  	
+  struct stat statbuf;
+  FILE *fh; 
+  char *source; 
+  
+  fh = fopen(filename, "r");
+  if (fh == 0)
+    return 0; 
+  
+  stat(filename, &statbuf);
+  source = (char *) malloc(statbuf.st_size + 1);
+  fread(source, statbuf.st_size, 1, fh);
+  source[statbuf.st_size] = '\0'; 
+  
+  return source; 
+}
+
+opencl_stuff opencl_initialization(dataset ds) {
+
+  int i;
+  
+  opencl_stuff ocl;
+
+  cl_platform_id platform; 
+  cl_context_properties contprop[3];
+  cl_program* programs;
+  
+  cl_uint num_gpus;
+  cl_uint num_acc;
+  cl_uint num_cpus;
+
+  int num_devs;
+
+  cl_int err;
+  
+  cl_device_id* devices;
+
+  char BuildErrorLog[2048];
+  size_t BuildErrorLength;
+
+  char clSourceFile[] = "smith-waterman-gpu.cl";
+  char* clSource;
+  
+  size_t acc_distance_size;
+  
+  int seq_offset = 300;
+
+  char* gpu_sequence_dataset_buffer=
+    (char*)malloc(sizeof(char)*300*ds.n_values);
+
+  for(i=0;i<ds.n_values;i++) {
+    memcpy(gpu_sequence_dataset_buffer+300*i,
+	   ds.sequences[i],ds.sequence_lengths[i]+1);
+  }
+
+  
+  
+  clGetPlatformIDs(1, &platform,NULL);
+  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &num_gpus);
+  if (err == CL_DEVICE_NOT_FOUND) num_gpus = 0;
+  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL, &num_cpus);
+  if (err == CL_DEVICE_NOT_FOUND) num_cpus = 0;
+  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ACCELERATOR, 0, NULL, &num_acc);
+  if (err == CL_DEVICE_NOT_FOUND) num_acc = 0;
+
+  if (num_acc == 0 && num_gpus == 0 && num_cpus == 0) {
+    printf("No opencl devices found");
+    _exit(1);
+  }
+  
+  if ( num_gpus > 0 ) {
+    devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_gpus);
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, num_gpus, devices, NULL);
+    num_devs = num_gpus;
+  } else if (num_acc > 0) {
+    devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_acc);
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_ACCELERATOR,
+		   num_acc, devices, NULL);
+    num_devs = num_acc;
+  } else if (num_cpus > 0 ) {
+    devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_cpus);
+    clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, num_cpus, devices, NULL);
+    num_devs = num_cpus;
+  }
+
+  ocl.cmdq = (cl_command_queue*)malloc(sizeof(cl_command_queue)*num_devs);
+  ocl.contexts = (cl_context*)malloc(sizeof(cl_context)*num_devs);
+  ocl.kernel = (cl_kernel*)malloc(sizeof(cl_kernel)*num_devs);
+  programs = (cl_program*)malloc(sizeof(cl_program)*num_devs);
+
+  ocl.acc_sequences = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
+  ocl.acc_sequence_lengths = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
+  ocl.acc_distances = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
+
+  ocl.local_distances = (int*)malloc(sizeof(int)*ds.n_values);
+  
+  contprop[0] = CL_CONTEXT_PLATFORM;
+  contprop[1] = (cl_context_properties)platform;
+  contprop[2] = 0;
+
+  clSource = load_program_source(clSourceFile);
+  
+  for(i=0;i<num_devs;i++) {
+    ocl.contexts[i] = clCreateContext(contprop, 1, devices+i, NULL, NULL, &err);
+    if(err != CL_SUCCESS) {
+      printf("Context Creation failed! OCL-ERROR-CODE: %i\n", err);
+    }
+    ocl.cmdq[i] = clCreateCommandQueue(ocl.contexts[i], devices[i], 0, NULL);
+
+    programs[i] = clCreateProgramWithSource(ocl.contexts[i],1,
+					    (const char**)&clSource,NULL,
+					    &err);
+    if( err != CL_SUCCESS) {
+      printf("Program creation failed! \n");
+    }
+    err = clBuildProgram(programs[i],0,NULL, NULL, NULL, NULL);
+
+    if( err != CL_SUCCESS) {
+      clGetProgramBuildInfo(programs[i],devices[i],CL_PROGRAM_BUILD_LOG,
+			    2048,BuildErrorLog,&BuildErrorLength);
+
+      printf("Build Error Log: \n%s\n",BuildErrorLog); 
+    }
+
+    ocl.kernel[i] = clCreateKernel(programs[i],"gpuwaterman",&err);
+
+    ocl.acc_sequence_lengths[i] = clCreateBuffer(ocl.contexts[i],
+					     CL_MEM_READ_WRITE,
+					     sizeof(size_t)*ds.n_values,
+					     NULL,&err);
+    err = clEnqueueWriteBuffer(ocl.cmdq[i],
+			       ocl.acc_sequence_lengths[i],
+			       CL_TRUE,
+			       0,
+			       sizeof(size_t)*ds.n_values,
+			       ds.sequence_lengths,
+			       0,NULL,NULL);
+    
+    ocl.acc_sequences[i] = clCreateBuffer(ocl.contexts[i],
+				      CL_MEM_READ_WRITE,
+				      sizeof(char)*300*ds.n_values,
+				      NULL,&err);
+
+    err = clEnqueueWriteBuffer(ocl.cmdq[i],
+			       ocl.acc_sequences[i],
+			       CL_TRUE,
+			       0,
+			       sizeof(char)*300*ds.n_values,
+			       gpu_sequence_dataset_buffer,
+			       0,NULL,NULL);
+    
+    if (i == 0) {
+      acc_distance_size = ds.n_values/num_devs + ds.n_values%num_devs;
+    } else {
+      acc_distance_size = ds.n_values/num_devs;
+    }
+    ocl.acc_distances[i] = clCreateBuffer(ocl.contexts[i],
+					 CL_MEM_READ_WRITE,
+					  (sizeof(int)*acc_distance_size),
+					  NULL,&err);
+
+    err = clSetKernelArg(ocl.kernel[i],
+			 0,sizeof(cl_mem),ocl.acc_sequences+i);
+    err = clSetKernelArg(ocl.kernel[i],
+			 1,sizeof(cl_mem),ocl.acc_sequence_lengths+i);
+    err = clSetKernelArg(ocl.kernel[i],
+			 2,sizeof(cl_mem),ocl.acc_distances+i);
+    err = clSetKernelArg(ocl.kernel[i],
+			 3,sizeof(int),&seq_offset);
+			       
+  }
+  ocl.num_devs =num_devs;
+  return(ocl);
+}
+  
+#endif
+
 static inline int compare(const void* a , const void* b) {
   int na = *(int*)a;
   int nb = *(int*)b;
   return (na-nb);
 }
 
-#if defined(_SCAN_SMITH_WATERMAN)
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+static inline neighbors region_query(int point, float epsilon, dataset ds,
+				     opencl_stuff ocl) {
+
+  int i,j,k;
+
+  neighbors nb;
+
+  cl_int err;
+  
+  size_t pointer_offset = 0;
+  size_t acc_distance_size;
+  
+  nb.members=(int*)malloc(sizeof(int)*ds.n_values);
+  
+  for(i=0;i<ocl.num_devs;i++) {
+
+    if (i == 0) {
+      acc_distance_size = ds.n_values/ocl.num_devs + ds.n_values%ocl.num_devs;
+    } else {
+      acc_distance_size = ds.n_values/ocl.num_devs;
+    }
+    
+    err = clSetKernelArg(ocl.kernel[i],4,sizeof(int),&point);
+    
+    err = clEnqueueNDRangeKernel(ocl.cmdq[i],ocl.kernel[i],1,
+				 NULL,
+				 &acc_distance_size,
+				 NULL,
+				 0,NULL,NULL);
+
+    
+
+    err = clEnqueueReadBuffer(ocl.cmdq[i], ocl.acc_distances[i],
+			      CL_TRUE, 0,
+			      acc_distance_size*sizeof(int),
+			      ocl.local_distances+pointer_offset,
+			      0,NULL,NULL);
+    pointer_offset+=acc_distance_size;
+  }
+
+  nb.n_members = 0;
+  for(i =0;i<ds.n_values;i++) {
+    if(ocl.local_distances[i] < epsilon) {
+      nb.members[nb.n_members++] = i;
+    }
+  }
+  return(nb);
+}
+
+#elif defined(_SCAN_SMITH_WATERMAN)
 static inline neighbors region_query(int point, float epsilon, dataset ds) {
 
   int i,j,k;
@@ -294,7 +545,12 @@ static inline void expand_cluster(int point,
 				  int minpts,
 				  char* visited,
 				  int* cluster_member,
-				  dataset ds) {
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+				  dataset ds, opencl_stuff ocl
+#else				  
+				  dataset ds
+#endif
+				  ) {
 
   int i,j;
   neighbors nb_of_nb;
@@ -330,7 +586,11 @@ static inline void expand_cluster(int point,
   for(i=0;i < nb_unsorted.n_members;i++) {
     if(!get_value_in_binary_array_at_index(visited,nb_unsorted.members[i])) {
       set_value_in_binary_array_at_index(visited,nb_unsorted.members[i]);
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+      nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds, ocl);
+#else
       nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds);
+#endif
       if (nb_of_nb.n_members >= minpts) {
 	/*merge = (int*)malloc((nb.n_members+nb_of_nb.n_members)
 	 *sizeof(int));*/
@@ -438,6 +698,8 @@ dbscan_L1
 dbscan_L2
 #elif defined (_SCAN_SMITH_WATERMAN)
 dbscan_SW
+#elif defined (_SCAN_SMITH_WATERMAN_GPU)
+dbscan_SW_GPU
 #endif
 (dataset ds, float epsilon, int minpts) {
 
@@ -448,6 +710,10 @@ dbscan_SW
   char* visited = alloc_and_set_zero_binary_array(ds.n_values);
   int n_clusters = 0;
   int* cluster_member = (int*)malloc(sizeof(int)*ds.n_values);
+
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+  opencl_stuff ocl = opencl_initialization(ds);
+#endif
   
   if (epsilon == -1) {
     printf("Warning @dbscan: epsilon value is: %f\n", epsilon);
@@ -473,10 +739,21 @@ dbscan_SW
   for(i=0;i<ds.n_values;i++) {
     if(!get_value_in_binary_array_at_index(visited,i)) {
       set_value_in_binary_array_at_index(visited,i);
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+      nb = region_query(i, epsilon, ds, ocl);
+#else
       nb = region_query(i, epsilon, ds);
+#endif
       if ( minpts < nb.n_members ) {
-	expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
-		       visited,cluster_member,ds);
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+		expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
+			       visited,cluster_member,ds, ocl);
+#else
+		expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
+			       visited,cluster_member,ds);
+#endif
+
+		       
 	n_clusters++;
       } else {
 	free(nb.members);
