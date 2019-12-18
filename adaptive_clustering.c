@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   char buffer[20];
   
   split_set* set_of_split_sets;
-  cluster_connections** connections;
+  cluster_connections** connections = NULL;
   cluster_connections* current_connection;
   
   cluster not_covered;
@@ -79,23 +79,25 @@ int main(int argc, char** argv) {
 
   initial_counter = 0;
   while( set_of_split_sets[0].n_clusters == 1 ) {
-    if (initial_counter == 20) {
+    if (initial_counter == 20 || epsilon_start == 0) {
       printf("Error did not find a sufficient" 
 	     " starting position in 20 tries \n");
+      return(1);
+    }
+    epsilon_start = epsilon_start/2;
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
-      set_of_split_sets[0] = dbscan_SW_GPU(ds, epsilon_start/2, minpts,ocl);
+    set_of_split_sets[0] = dbscan_SW_GPU(ds, epsilon_start, minpts,ocl);
 #else
-      set_of_split_sets[0] = dbscan_SW(ds, epsilon_start/2, minpts);
+    set_of_split_sets[0] = dbscan_SW(ds, epsilon_start, minpts);
 #endif
-      initial_counter++;
-    }  
+    initial_counter++;  
   }
-
+  
   printf("Sarting with %i clusters\n", set_of_split_sets[0].n_clusters);
   
   not_covered = data_not_in_clusters(set_of_split_sets[0], ds);
 
-  printf("Coverage at initial point: %f",
+  printf("Coverage at initial point: %f\n",
 	 (float)1.f-(float)not_covered.n_members/(float)ds.n_values);
 
   if(set_of_split_sets[0].n_clusters == 1) {
@@ -115,8 +117,10 @@ int main(int argc, char** argv) {
     if (new_split_set.n_clusters < set_of_split_sets[count].n_clusters) {
       
       not_covered = data_not_in_clusters(new_split_set, ds);
+
+      printf("Layer %i has %i clusters\n",count, new_split_set.n_clusters);
       
-      printf("Coverage at layer %i: %f", count,
+      printf("Coverage at layer %i: %f\n", count,
 	     1.f-(float)not_covered.n_members/(float)ds.n_values);
 	          
       current_connection = generate_split_set_relation(set_of_split_sets[0],

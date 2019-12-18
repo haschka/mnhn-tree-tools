@@ -1,5 +1,5 @@
-int SCORE=4;
-int GAP=3; 
+__constant int SCORE=4;
+__constant int GAP=3; 
     
 int substitute(char a, char b) {
 
@@ -14,7 +14,8 @@ __kernel void gpuwaterman(__global char* sequences,
 			  __global size_t* lengths,
 			  __global int* ret_vals,
 			  int sequence_offset,
-			  int idx_current_seq ) {
+			  int idx_current_seq,
+			  int starting_point) {
 
 
   __private int matrix[600];
@@ -26,15 +27,17 @@ __kernel void gpuwaterman(__global char* sequences,
 
   int idx = get_global_id(0);
   
-  __global char* A = sequences+idx*sequence_offset;
+  __global char* A =
+    sequences+starting_point*sequence_offset+idx*sequence_offset;
+
   __global char* B = sequences+idx_current_seq*sequence_offset;
 
   //  printf("%i \n",);
-  printf("%s \n",A);
-  printf("%s \n",B);
-  printf("i %i \n", idx);
+  //  printf("%s \n",A);
+  // printf("%s \n",B);
+  // printf("i %i \n", idx);
   
-  int len_a = lengths[idx];
+  int len_a = lengths[starting_point+idx];
   int len_b = lengths[idx_current_seq];
   
   int rank_a = len_a+1;
@@ -91,7 +94,7 @@ __kernel void gpuwaterman(__global char* sequences,
   //  printf("m %i\n", max_max);
   //printf("o %i\n", optimum);
     
-  ret_vals[idx] = optimum - max_max;
+  ret_vals[starting_point+idx] = optimum - max_max;
 }
       
 		       

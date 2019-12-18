@@ -1,6 +1,6 @@
 CC=gcc
 #CFLAGS=-g
-CFLAGS=-O2 -march=native -ftree-vectorize -ftree-loop-linear
+CFLAGS=-O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread

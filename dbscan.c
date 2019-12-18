@@ -233,7 +233,7 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
   size_t acc_distance_size;
   
   nb.members=(int*)malloc(sizeof(int)*ds.n_values);
-  
+
   for(i=0;i<ocl.num_devs;i++) {
 
     if (i == 0) {
@@ -243,6 +243,8 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
     }
     
     err = clSetKernelArg(ocl.kernel[i],4,sizeof(int),&point);
+  
+    err = clSetKernelArg(ocl.kernel[i],5,sizeof(int),&pointer_offset);
     
     err = clEnqueueNDRangeKernel(ocl.cmdq[i],ocl.kernel[i],1,
 				 NULL,
