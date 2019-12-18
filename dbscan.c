@@ -2,15 +2,6 @@
 #include<string.h>
 #include<stdio.h>
 
-#if defined(_SCAN_L1)
-#include<math.h>
-#endif
-
-#include"binary_array.h"
-#include"dataset.h"
-#include"cluster.h"
-#include"dbscan.h"
-
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 #ifdef __APPLE__
 #include<OpenCL/OpenCL.h>
@@ -21,6 +12,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
+
+#if defined(_SCAN_L1)
+#include<math.h>
+#endif
+
+#include"binary_array.h"
+#include"dataset.h"
+#include"cluster.h"
+#include"dbscan.h"
+
 
 #if defined(_SCAN_SMITH_WATERMAN)
 #include"smith-waterman.h"
@@ -33,16 +34,6 @@
 #endif
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
-typedef struct {
-  cl_command_queue* cmdq;
-  cl_kernel* kernel;
-  cl_context* contexts;
-  cl_mem* acc_sequences;
-  cl_mem* acc_sequence_lengths;
-  cl_mem* acc_distances;
-  int * local_distances;
-  int num_devs;
-} opencl_stuff;
 
 char* load_program_source(const char* filename) {
   	
@@ -701,7 +692,12 @@ dbscan_SW
 #elif defined (_SCAN_SMITH_WATERMAN_GPU)
 dbscan_SW_GPU
 #endif
-(dataset ds, float epsilon, int minpts) {
+#if defined (_SCAN_SMITH_WATERMAN_GPU)
+(dataset ds, float epsilon, int minpts, opencl_stuff ocl)
+#else
+(dataset ds, float epsilon, int minpts)
+#endif
+{
 
   int i;
   neighbors nb;
@@ -710,10 +706,6 @@ dbscan_SW_GPU
   char* visited = alloc_and_set_zero_binary_array(ds.n_values);
   int n_clusters = 0;
   int* cluster_member = (int*)malloc(sizeof(int)*ds.n_values);
-
-#if defined (_SCAN_SMITH_WATERMAN_GPU)
-  opencl_stuff ocl = opencl_initialization(ds);
-#endif
   
   if (epsilon == -1) {
     printf("Warning @dbscan: epsilon value is: %f\n", epsilon);

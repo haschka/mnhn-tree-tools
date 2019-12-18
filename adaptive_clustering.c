@@ -4,6 +4,14 @@
 #include<ctype.h>
 #include<unistd.h>
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#ifdef __APPLE__
+#include<OpenCL/OpenCL.h>
+#else
+#include<CL/opencl.h>
+#endif
+#endif
+
 #include"dataset.h"
 #include"cluster.h"
 #include"dbscan.h"
@@ -42,6 +50,10 @@ int main(int argc, char** argv) {
   float coverage;
   
   split_set new_split_set;
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  opencl_stuff ocl;
+#endif
   
   sscanf(argv[2], "%f", &epsilon_start);
   sscanf(argv[3], "%f", &epsilon_inc);
@@ -52,17 +64,30 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  set_of_split_sets = (split_set*)malloc(sizeof(split_set));
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  ocl = opencl_initialization(ds);
+#endif
   
+  set_of_split_sets = (split_set*)malloc(sizeof(split_set));
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  set_of_split_sets[0] = dbscan_SW_GPU(ds, epsilon_start, minpts,ocl);
+#else
   set_of_split_sets[0] = dbscan_SW(ds, epsilon_start, minpts);
+#endif
+ 
 
   initial_counter = 0;
   while( set_of_split_sets[0].n_clusters == 1 ) {
     if (initial_counter == 20) {
       printf("Error did not find a sufficient" 
 	     " starting position in 20 tries \n");
-    set_of_split_sets[0] = dbscan_SW(ds, epsilon_start/2, minpts);
-    initial_counter++;
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+      set_of_split_sets[0] = dbscan_SW_GPU(ds, epsilon_start/2, minpts,ocl);
+#else
+      set_of_split_sets[0] = dbscan_SW(ds, epsilon_start/2, minpts);
+#endif
+      initial_counter++;
     }  
   }
 
@@ -81,7 +106,12 @@ int main(int argc, char** argv) {
   count = 0;
   eps_count = 1;
   do{
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+    new_split_set =
+      dbscan_SW_GPU(ds,epsilon_start+eps_count*epsilon_inc, minpts, ocl);
+#else
     new_split_set = dbscan_SW(ds, epsilon_start+eps_count*epsilon_inc, minpts);
+#endif
     if (new_split_set.n_clusters < set_of_split_sets[count].n_clusters) {
       
       not_covered = data_not_in_clusters(new_split_set, ds);

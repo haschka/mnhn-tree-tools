@@ -6,6 +6,15 @@
 
 #include"dataset.h"
 #include"cluster.h"
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#ifdef __APPLE__
+#include<OpenCL/OpenCL.h>
+#else
+#include<CL/opencl.h>
+#endif
+#endif
+
 #include"dbscan.h"
 
 void file_error(char* path) {
@@ -24,6 +33,10 @@ int main(int argc, char** argv) {
   
   split_set set_of_clusters;
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  opencl_stuff ocl;
+#endif  
+
   if(argc < 4) {
     printf("Arguments are: \n"
 	   " [file] Sequences in FASTA \n"
@@ -41,7 +54,8 @@ int main(int argc, char** argv) {
   fclose(fasta_f);
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
-  set_of_clusters = dbscan_SW_GPU(ds, epsilon, minpts);
+  ocl = opencl_initialization(ds);
+  set_of_clusters = dbscan_SW_GPU(ds, epsilon, minpts, ocl);
 #else
   set_of_clusters = dbscan_SW(ds, epsilon, minpts);
 #endif

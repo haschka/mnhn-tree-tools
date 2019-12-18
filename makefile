@@ -8,7 +8,8 @@ OPENCL=-lOpenCL
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
-     compareSW silhouette consens sequence_multiplicity adaptive_clustering
+     compareSW silhouette consens sequence_multiplicity adaptive_clustering \
+     adaptive_clustering_GPU
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -72,6 +73,13 @@ adaptive_clustering: adaptive_clustering.c  dbscan.h dataset.h cluster.h \
                      smith_waterman.o
 	$(CC) $(CFLAGS) adaptive_clustering.c -o ./bin/adaptive_clustering \
  dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH)
+
+adaptive_clustering_GPU: adaptive_clustering.c  dbscan.h dataset.h cluster.h \
+	                 dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o \
+                         smith_waterman.o
+	$(CC) $(CFLAGS) adaptive_clustering.c -o ./bin/adaptive_clustering_GPU \
+ dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o smith_waterman.o \
+ $(MATH) $(OPENCL) -D_SCAN_SMITH_WATERMAN_GPU
 
 compareSW: compareSW.c dataset.h comparison.h smith_waterman.o comparison.o \
            dataset.o binary_array.o
