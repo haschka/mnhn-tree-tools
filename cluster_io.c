@@ -238,6 +238,7 @@ split_set read_split_set(char* filename) {
 	   "the binary clusterfile %s", filename);
   }
   close(fd);
+  return(s);
 }   
   
 void store_split_set(char* filename, split_set s) {

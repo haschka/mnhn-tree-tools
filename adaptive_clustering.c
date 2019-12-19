@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
   
   sscanf(argv[2], "%f", &epsilon_start);
   sscanf(argv[3], "%f", &epsilon_inc);
-  sscanf(argv[3], "%i", &minpts);
-  sscanf(argv[4], "%s", split_files_prefix);
+  sscanf(argv[4], "%i", &minpts);
+  sscanf(argv[5], "%s", split_files_prefix);
   
   if ( NULL == (fasta_f = fopen(argv[1], "r"))) file_error(argv[1]);
   ds = dataset_from_fasta(fasta_f);
@@ -67,6 +67,8 @@ int main(int argc, char** argv) {
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   ocl = opencl_initialization(ds);
 #endif
+
+  printf("Dataset read!\n");
   
   set_of_split_sets = (split_set*)malloc(sizeof(split_set));
 
@@ -75,7 +77,9 @@ int main(int argc, char** argv) {
 #else
   set_of_split_sets[0] = dbscan_SW(ds, epsilon_start, minpts);
 #endif
- 
+
+  printf("Initial set obtained with %i clusters\n",
+	 set_of_split_sets[0].n_clusters);
 
   initial_counter = 0;
   while( set_of_split_sets[0].n_clusters == 1 ) {
@@ -85,6 +89,8 @@ int main(int argc, char** argv) {
       return(1);
     }
     epsilon_start = epsilon_start/2;
+    printf("Trying new starting point \n");
+
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
     set_of_split_sets[0] = dbscan_SW_GPU(ds, epsilon_start, minpts,ocl);
 #else
@@ -123,7 +129,7 @@ int main(int argc, char** argv) {
       printf("Coverage at layer %i: %f\n", count,
 	     1.f-(float)not_covered.n_members/(float)ds.n_values);
 	          
-      current_connection = generate_split_set_relation(set_of_split_sets[0],
+      current_connection = generate_split_set_relation(set_of_split_sets[count],
 						       new_split_set);
       count++;
       set_of_split_sets = (split_set*)realloc(set_of_split_sets,
@@ -141,7 +147,7 @@ int main(int argc, char** argv) {
 
   printf("Connections found: \n");
 
-  for(i=0;i<count;i++) {
+  for(i=0;i<(count+1);i++) {
     
     sprintf(buffer,"%04d",i);
     memcpy(split_files,split_files_prefix,
@@ -153,11 +159,12 @@ int main(int argc, char** argv) {
 
   for(i=count;i>0;i--) {
     printf("Layer %i:\n", i);
-    for(j=0;set_of_split_sets[i].n_clusters;j++) {
+    for(j=0;j<set_of_split_sets[i].n_clusters;j++) {
       printf("  Cluster %i connected to: \n  ",j);
-      for(k=0;connections[i-1][j].n_connections;k++) {
+      for(k=0;k<connections[i-1][j].n_connections;k++) {
 	printf("%i ", connections[i-1][j].connections[k]);
       }
+      printf("\n");
     }
   }
 }

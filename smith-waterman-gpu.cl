@@ -94,7 +94,7 @@ __kernel void gpuwaterman(__global char* sequences,
   //  printf("m %i\n", max_max);
   //printf("o %i\n", optimum);
     
-  ret_vals[starting_point+idx] = optimum - max_max;
+  ret_vals[idx] = optimum - max_max;
 }
       
 		       

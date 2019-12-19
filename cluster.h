@@ -37,4 +37,4 @@ cluster_connections* generate_split_set_relation(split_set ancient,
 
 
 void store_split_set(char* filename, split_set s);
-void load_split_set(char* filename, split_set*s);
+split_set read_split_set(char* filename);

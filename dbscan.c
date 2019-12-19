@@ -264,7 +264,7 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
 
   nb.n_members = 0;
   for(i =0;i<ds.n_values;i++) {
-    if(ocl.local_distances[i] < epsilon) {
+    if(ocl.local_distances[i] <= epsilon) {
       nb.members[nb.n_members++] = i;
     }
   }
