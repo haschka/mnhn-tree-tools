@@ -152,7 +152,7 @@ cluster intersection_of_clusters(cluster a, cluster b) {
 
     for(i = 0 ; i < small.n_members; i++) {
       for(j = 0; j < big.n_members;j++) {
-	if (small.members[i] == small.members[j]) {
+	if (small.members[i] == big.members[j]) {
 	  intersection.members[count] = small.members[i];
 	  count++;
 	}
