@@ -1,13 +1,36 @@
+/*! \file dataset.h
+ *  \brief The dataset header file containing interfaces for the
+ *         main dataset structure used in our toolbox
+ */
+
 /*! \brief Structure for a n dimenstional dataset composed of
  *         non missing floating point values.
+ *  This structure is the main dataset structure used for all
+ *  kinds of computations in this toolset. In general it is created
+ *  initially by converting a fasta file to this internal data structure
+ *  augmenting it with supplimental values.
+ *  \var sequences The sequencies of a dataset orgeniced by
+ *                 sequences[sequence_index .. from 0 to n_values-1]
+ *                          [base position index]
+ *  \var sequence_lengths The lengths of the sequences in this dataset
+ *  \var binary_sequences A place holder for the use of binary sequences
+ *  \var n_values the number of sequences stored in this dataset
+ *  \var values additinal values for each sequence. Multiple values
+ *              can be stored using the n_dimensions switch for each sequence.
+ *              values are organized by 
+ *              values[dimension][value ... from 0 to n_value-1],
+ *              for computational efficiency. 
+ *  \var n_dimensions the dimensionality of the data stored in values
+ *  \var max_sequence_length the length of the longest sequence in
+ *                           sequences
  */
 typedef struct {
-  char** sequences;
+  char** sequences; 
   size_t* sequence_lengths;
   void** binary_sequences;
-  int n_values; /*!< number of samples in the dataset*/
-  float** values; /*!< supplimental data to sequencies, i.e. used for kmers */
-  int n_dimensions; /*!< dimensions of supplimental data*/
+  int n_values; 
+  float** values; 
+  int n_dimensions; 
   size_t max_sequence_length;
 } dataset;
 
@@ -16,6 +39,17 @@ typedef struct {
   size_t n_samples;
 } data_shape;
 
+/*! \brief Structure to hold a consensus caluclation.
+ *  This structure contains the statistics that lead to, as well as the
+ *  conensus sequence calculated from a dataset
+ *  \var seqeunece A string holding the consensus sequence.
+ *  \var absolute_frequencies holds the absolute frequencies for each 
+ *                            of the 4 bases at an indexed position. 
+ *  \var relative_frequencies holds the relative frequencies for each
+ *                            of the 4 bases at an indexed position.
+ *  \var length The length of the sequence and hence of all arrays in this
+ *              strucutre
+ */
 typedef struct {
   char* sequence;
   size_t* absolute_frequencies[4];
@@ -32,10 +66,44 @@ typedef struct {
   int n_seq;             /*!< number of unique sequences in dataset */
 } unique_sequences;
 
+/*! \brief a function that generates a dataset structure from a 
+ *         fasta file.
+ *  \param an opened readable file pointer pointing to a fasta file.
+ *  \return a dataset that holds the sequences in the fasta file.
+ */
 dataset dataset_from_fasta(FILE* in);
+
+/*! \brief a function to free the memory used by a dataset
+ *  This function frees an entire dataset.
+ *  \param ds the dataset to be freed
+ */
 void free_dataset(dataset ds);
+
+/*! \brief a function that frees supplimental values to a dataset 
+ *         from the dataset.
+ *  This function only frees the data held by the supplimental
+ *  values to the dataset.
+ *  \param ds the dataset that the supplimental values should be freed from.
+ */
 void free_values_from_dataset(dataset ds);
+
+/*! \brief a function that frees sequences from a dataset.
+ *  This function only frees the data held by the sequences from a dataset.
+ *  \param ds the dataset that the supplimental values should be freed from.
+ */
 void free_sequences_from_dataset(dataset ds);
+
+/*! \brief a function that loads projections from a PCA calculation 
+ *         into a dataset as supplimental data. 
+ *  \param projections an opened readable file pointer to 
+ *                     a file containing the projections
+ *                     i.e. obtained from the kmer2pca tool.
+ *  \param dimensions the dimensions that are available in the file
+ *                    to be loaded. Warning! Defining less or more dimensions
+ *                    then those held in the file results in corrupt results.
+ *  \param ds a pointer to the dataset that the projections shall be
+ *            loaded to.
+ */
 void load_projections_from_file_into_dataset(FILE* projections,
 					     size_t dimensions,
 					     dataset* ds);
