@@ -107,11 +107,57 @@ void free_sequences_from_dataset(dataset ds);
 void load_projections_from_file_into_dataset(FILE* projections,
 					     size_t dimensions,
 					     dataset* ds);
-
+/*! \brief a function to load kmer vectors generated with fasta2kmer 
+ *         as supplimental values into the dataset.
+ *  This function loads a kmer represenation generated with fasta2kmer
+ *  into the dataset. In order to do this one has to know the shape of the
+ *  kmer file. The shape can be determined with the shape_from_kmer_file()
+ *  function. One can load sequences from an initial fasta
+ *  \param in_file a readable, opened file pointer to file containing the
+ *                 kmer representation
+ *  \param shape the datashape of the kmer file. 
+ *  \return a dataset with the values of the kmer file.
+ */
 dataset load_kmer_from_file_into_dataset(FILE* in_file, data_shape shape);
+
+/*! \brief A function to obtain the data shape of a kmer representation.
+ *  \param infile a file descriptor of an opened readable file 
+ *                containing the a kmer representation
+ *  \return the shape of the kmer file
+ */
 data_shape shape_from_kmer_file(int infile);
+
+/*! \brief A function to calculate a consensus sequence and consensus
+ *         statistics from the sequences in a dataset.
+ *  \param ds the dataset to calculate the consensus sequence 
+ *  \return the consesus sequence and the statistics of frequencies of bases
+ *          stored in a consens structure. 
+ */ 
 consens obtain_consens_from_dataset(dataset ds);
+
+/*! \brief A function to print the consensus statistics in a readable
+ *         manner to a file.
+ *  \param f a pointer to an opened writeable file.
+ *  \param cs the consensus structure whose contents shall be printed out.
+ */
 void print_consensus_statistics(FILE* f, consens cs);
+
+/*! \brief A function to sort unique sequencies by frequency.
+ *  \param us the unique sequences structure to be sorted by frequency.
+ */
 void sort_unique_sequences(unique_sequences us);
+
+/*! \brief A function to obtain an index and multiplicities of unique
+ *         sequences in a dataset.
+ *  \param the dataset to find unique sequences in.
+ */
 unique_sequences get_sequence_multiplicities(dataset ds);
+
+/*! \brief Write unique sequences in fasta format to a file.
+ *  \param outfile An opened writeable file pointer the file to print the
+ *                 unique sequences of a dataset to.
+ *  \param ds The dataset that the unique sequences were calculated from
+ *  \param us The index to the unique sequences in the dataset obtained with
+ *            get_sequence_multiplicities.
+ */
 void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
