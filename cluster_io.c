@@ -167,6 +167,40 @@ cluster intersection_of_clusters(cluster a, cluster b) {
   return(intersection);
 }
 
+void print_cluster_matrix_view_annotation(FILE* f, dataset ds) {
+
+  int i;
+
+  for(i=0;i<ds.n_values-1;i++) {
+    fprintf(f,"%i\t",i);
+  }
+  fprintf(f,"%i\n",ds.n_values-1);
+}
+
+void print_cluster_matrix_view(FILE*f, split_set s, dataset ds) {
+
+  int i,j;
+
+  int* matrix_line = (int*)malloc(sizeof(int)*ds.n_values);
+
+  for(i=0;i<ds.n_values;i++) {
+    matrix_line[i] = -1;
+  }
+
+  for( i = 0; i< s.n_clusters; i++) {
+    for (j = 0; j< s.clusters[i].n_members; j++) {
+      matrix_line[s.clusters[i].members[j]] = i;
+    }
+  }
+
+  for( i = 0; i<ds.n_values-1;i++) {
+    fprintf(f,"%i\t", matrix_line[i]);
+  }
+  fprintf(f,"%i\n", matrix_line[ds.n_values-1]);
+  free(matrix_line);
+}
+      
+
 cluster data_not_in_clusters(split_set s, dataset ds) {
 
   int i,j;

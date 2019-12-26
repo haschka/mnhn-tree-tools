@@ -9,7 +9,8 @@ OPENCL=-lOpenCL
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
      compareSW silhouette consens sequence_multiplicity adaptive_clustering \
-     adaptive_clustering_GPU split_set_to_fasta print_connections
+     adaptive_clustering_GPU split_set_to_fasta print_connections \
+     split_set_to_matrix_line split_set_to_matrix_annotation
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -85,6 +86,17 @@ split_set_to_fasta: split_set_to_fasta.c dataset.h cluster.h dataset.o \
                     cluster_io.o binary_array.o
 	$(CC) $(CFLAGS) split_set_to_fasta.c -o ./bin/split_set_to_fasta \
  dataset.o cluster_io.o binary_array.o $(MATH)
+
+split_set_to_matrix_line: split_set_to_matrix_line.c dataset.h cluster.h \
+                          dataset.o cluster_io.o binary_array.o
+	$(CC) $(CFLAGS) split_set_to_matrix_line.c \
+ -o ./bin/split_set_to_matrix_line dataset.o cluster_io.o binary_array.o $(MATH)
+
+split_set_to_matrix_annotation: split_set_to_matrix_line.c dataset.h cluster.h \
+                                binary_array.o cluster_io.o dataset.o
+	$(CC) $(CFLAGS) split_set_to_matrix_annotation.c \
+ -o ./bin/split_set_to_matrix_annotation dataset.o cluster_io.o \
+ binary_array.o $(MATH)
 
 print_connections: print_connections.c dataset.h cluster.h dataset.o \
                     cluster_io.o binary_array.o

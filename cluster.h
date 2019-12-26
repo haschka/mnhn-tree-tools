@@ -38,3 +38,5 @@ cluster_connections* generate_split_set_relation(split_set ancient,
 
 void store_split_set(char* filename, split_set s);
 split_set read_split_set(char* filename);
+void print_cluster_matrix_view_annotation(FILE* f, dataset ds);
+void print_cluster_matrix_view(FILE*f, split_set s, dataset ds);
