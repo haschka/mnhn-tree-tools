@@ -26,7 +26,7 @@ typedef struct {
 } cluster_connections;
 
 typedef struct tree_node{
-  int id;
+  char* id;
   double length;
   struct tree_node* child;
   struct tree_node* neighbor;

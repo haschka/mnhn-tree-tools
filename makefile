@@ -1,4 +1,5 @@
 CC=gcc
+#CFLAGS=-g -fsanitize=address
 CFLAGS=-g
 #CFLAGS=-O2 -march=native -ftree-vectorize
 LAPACK=-llapack
@@ -28,7 +29,7 @@ dbscan_SW_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
  -o dbscan_SW_GPU.o
 dbscan_L1.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L1 -o dbscan_L1.o
-dbscan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
+dbscsets[i].n_clustersan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L2 -o dbscan_L2.o 
 dataset.o: dataset.c dataset.h binary_array.h
 	$(CC) $(CFLAGS) -c dataset.c -o dataset.o
