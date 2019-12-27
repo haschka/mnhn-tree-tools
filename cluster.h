@@ -25,6 +25,15 @@ typedef struct {
   int n_connections; /*!< the number of connections for a single cluster */
 } cluster_connections;
 
+typedef struct tree_node{
+  int id;
+  double length;
+  struct tree_node* child;
+  struct tree_node* neighbor;
+  struct tree_node* parent;
+} tree_node;
+
+
 void create_cluster_files(char* prefix, split_set s, dataset ds);
 void create_cluster_files_with_values(char* prefix, split_set s, dataset ds);
 void create_single_cluster_file(char* filename, cluster cl, dataset ds);
@@ -40,3 +49,7 @@ void store_split_set(char* filename, split_set s);
 split_set read_split_set(char* filename);
 void print_cluster_matrix_view_annotation(FILE* f, dataset ds);
 void print_cluster_matrix_view(FILE*f, split_set s, dataset ds);
+
+tree_node* generate_tree(int n_layers, cluster_connections** c,
+			 split_set* sets);
+void print_tree(FILE* f, tree_node* root);

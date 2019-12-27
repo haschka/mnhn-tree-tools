@@ -10,6 +10,65 @@
 #include"cluster.h"
 #include"binary_array.h"
 
+tree_node* generate_tree(int n_layers, cluster_connections** c,
+			 split_set *sets) {
+  
+  int i, j, k;
+
+  tree_node* current_node;
+  
+  tree_node** nodes = (tree_node**)malloc(sizeof(tree_node*)*n_layers);
+  
+  for(i=0;i<=n_layers;i++) {
+    nodes[i] = (tree_node*)malloc(sizeof(tree_node)
+				  *sets[i].n_clusters);
+    for(j=0;j<sets[i].n_clusters;j++) {
+      memset(nodes[i]+j,0,sizeof(tree_node));
+    }
+  }
+  
+  for(i=n_layers;i>0;i--) {
+    for(j=0;j<sets[i].n_clusters;j++) {
+      for(k=0;k<c[i-1][j].n_connections;k++) {
+	current_node = nodes[i-1]+c[i-1][j].connections[k];
+	current_node->parent = nodes[i]+j;
+	if(k>0) {
+	  current_node->neighbor =
+	    nodes[i-1]+c[i-1][j].connections[k-1];
+	} else {
+	  current_node->neighbor = NULL;
+	}
+	current_node->id = c[i-1][j].connections[k];
+      }
+      if(c[i-1][j].n_connections > 0) {
+	nodes[i][j].child = nodes[i-1]+(c[i-1][j].n_connections-1);
+      }
+    }
+  }
+  
+  return(nodes[n_layers]);
+}
+	  
+				      
+
+void print_tree(FILE*f, tree_node* root)
+{
+  tree_node* n;
+  if(root->child!=NULL)
+    {
+      fprintf(f,"(");
+      for(n=root->child;n!=NULL;n=n->neighbor)
+	{
+	  if(n!=root->child) fprintf(f,",");
+	  print_tree(f,n);
+	}
+      fprintf(f,")");
+    }
+  fprintf(f,"id%d",root->id);
+  //if(root->parent!=NULL) printf(":%f",root->length);
+}
+ 
+
 void create_single_cluster_file_with_values(char* filename, cluster cl,
 					    dataset ds) {
   int j, k;
