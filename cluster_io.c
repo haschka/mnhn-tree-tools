@@ -25,6 +25,7 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
     for(j=0;j<sets[i].n_clusters;j++) {
       nodes[i][j].id = NULL;
       nodes[i][j].length = 0;
+      nodes[i][j].n_members = 0;
       nodes[i][j].child = NULL;
       nodes[i][j].neighbor = NULL;
       nodes[i][j].parent = NULL;
@@ -43,7 +44,13 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
 	  current_node->neighbor = NULL;
 	}
 	current_node->id = (char*)malloc(sizeof(char)*20);
-	sprintf(current_node->id,"L%iC%i",i-1, c[i-1][j].connections[k]);
+	current_node->n_members =
+	  sets[i-1].clusters[c[i-1][j].connections[k]].n_members;
+	sprintf(current_node->id,"L%iC%iN%i",
+		i-1,
+		c[i-1][j].connections[k],
+		current_node->n_members);
+
       }
       if(c[i-1][j].n_connections > 0) {
 	nodes[i][j].child =

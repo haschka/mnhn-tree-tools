@@ -28,6 +28,7 @@ typedef struct {
 typedef struct tree_node{
   char* id;
   double length;
+  int n_members;
   struct tree_node* child;
   struct tree_node* neighbor;
   struct tree_node* parent;
