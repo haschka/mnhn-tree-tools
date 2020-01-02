@@ -1,6 +1,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<stdio.h>
+#include<unistd.h>
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 #ifdef __APPLE__
@@ -10,7 +11,6 @@
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #endif
 
 #if defined(_SCAN_L1)
@@ -770,4 +770,169 @@ dbscan_SW_GPU
   return(ret_val);
 }
 
+void adaptive_dbscan(
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+		     split_set (*dbscanner) (dataset,
+					     float,
+					     int,
+					     opencl_stuff),
+#else
+		     split_set (*dbscanner) (dataset,
+					     float,
+					     int),
+#endif
+		     dataset ds,
+		     float epsilon_start,
+		     float epsilon_inc,
+		     int minpts,
+		     char* split_files_prefix
+		     ) {
+  
+  int i,j,k;
 
+  int initial_counter, count, eps_count;
+  
+  split_set* set_of_split_sets;
+  cluster_connections** connections = NULL;
+  cluster_connections* current_connection;
+
+  cluster not_covered;
+
+  float coverage;
+  
+  split_set new_split_set;
+
+  char split_files[255];
+  char buffer[20];
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  opencl_stuff ocl = opencl_initialization(ds);
+#endif
+
+  printf("Performing adaptive clustering with parameters: \n"
+	 "minpts: %i\n"
+	 "epsilon_start: %f\n"
+	 "epsilon_inc: %f\n", minpts, epsilon_start, epsilon_inc);
+  	 
+  set_of_split_sets = (split_set*)malloc(sizeof(split_set));
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl);
+#else
+  set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts);
+#endif
+  
+  printf("Initial set obtained with %i clusters\n",
+	  set_of_split_sets[0].n_clusters);
+
+  initial_counter = 0;
+  while( set_of_split_sets[0].n_clusters == 1 ) {
+    if (initial_counter == 20 || epsilon_start == 0) {
+      printf("Error did not find a sufficient" 
+	     " starting position in 20 tries \n");
+      _exit(1);
+    }
+    epsilon_start = epsilon_start/2;
+    printf("Trying new starting point \n");
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+    set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl);
+#else
+    set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts);
+#endif
+    initial_counter++;  
+  }
+
+  printf("Sarting with %i clusters\n", set_of_split_sets[0].n_clusters);
+  
+  not_covered = data_not_in_clusters(set_of_split_sets[0], ds);
+
+  printf("Coverage at initial point: %f\n",
+	 (float)1.f-(float)not_covered.n_members/(float)ds.n_values);
+
+  if(set_of_split_sets[0].n_clusters == 1) {
+    printf("All clusters fusioned in one step, decrease epsilon increment\n");
+    _exit(1);
+  }
+
+  count = 0;
+  eps_count = 1;
+
+  do{
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+    new_split_set =
+      dbscanner(ds,epsilon_start+eps_count*epsilon_inc, minpts, ocl);
+#else
+    new_split_set = dbscanner(ds, epsilon_start+eps_count*epsilon_inc, minpts);
+#endif
+    if (new_split_set.n_clusters < set_of_split_sets[count].n_clusters) {
+      
+      not_covered = data_not_in_clusters(new_split_set, ds);
+      
+      printf("Layer %i has %i clusters\n",count+1, new_split_set.n_clusters);
+      
+      printf("  Coverage at layer %i: %f\n", count+1,
+	     1.f-(float)not_covered.n_members/(float)ds.n_values);
+
+      if(not_covered.n_members > 0) {
+	free(not_covered.members);
+      }
+
+      printf("  Epsilon at layer %i: %f\n", count+1,
+	     epsilon_start+eps_count*(float)epsilon_inc);
+	          
+      current_connection = generate_split_set_relation(set_of_split_sets[count],
+						       new_split_set);
+      count++;
+      set_of_split_sets = (split_set*)realloc(set_of_split_sets,
+					      sizeof(split_set)*(count+1));
+      connections =
+	(cluster_connections**)realloc(connections,
+				       sizeof(cluster_connections*)*
+				       count);
+      
+      set_of_split_sets[count] = new_split_set;
+      connections[count-1] = current_connection;
+    } else {
+      free_split_set_and_associated_clusters(new_split_set);
+    }
+    eps_count++;
+  }while(new_split_set.n_clusters != 1);
+
+  printf("Connections found: \n");
+  for(i=0;i<(count+1);i++) {
+    
+    sprintf(buffer,"%04d",i);
+    memcpy(split_files,split_files_prefix,
+	   strlen(split_files_prefix)+1);
+    strcat(split_files,buffer);
+
+    store_split_set(split_files, set_of_split_sets[i]);
+  }
+
+  for(i=count;i>0;i--) {
+    printf("Layer %i:\n", i);
+    for(j=0;j<set_of_split_sets[i].n_clusters;j++) {
+      printf("  Cluster %i connected to: \n  ",j);
+      for(k=0;k<connections[i-1][j].n_connections;k++) {
+	printf("%i ", connections[i-1][j].connections[k]);
+      }
+      printf("\n");
+    }
+  }
+
+  for(i=count;i>0;i--) {
+    for(j=0;j<set_of_split_sets[i].n_clusters;j++) {
+      free(connections[i-1][j].connections);
+    }
+    free(connections[i-1]);
+  }
+  free(connections);
+    
+  
+  for(i=0;i<(count+1);i++) {
+    free_split_set_and_associated_clusters(set_of_split_sets[i]);
+  }
+}
+  
+  

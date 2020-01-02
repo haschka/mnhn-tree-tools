@@ -28,5 +28,25 @@ split_set dbscan_SW(dataset ds, float epsilon, int minpts);
 opencl_stuff opencl_initialization(dataset ds);
 split_set dbscan_SW_GPU(dataset ds, float epsilon, int minpts,
 			opencl_stuff ocl);
+void adaptive_dbscan(split_set (*dbscanner) (dataset,
+					     float,
+					     int,
+					     opencl_stuff),
+		     dataset ds,
+		     float epsilon_start,
+		     float epsilon_inc,
+		     int minpts,
+		     char* split_files_prefix
+		     );
+#else
+void adaptive_dbscan(split_set (*dbscanner) (dataset,
+					     float,
+					     int),
+		     dataset ds,
+		     float epsilon_start,
+		     float epsilon_inc,
+		     int minpts,
+		     char* split_files_prefix
+		     );
 #endif
 void create_cluster_files(char* prefix, split_set s, dataset ds);

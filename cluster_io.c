@@ -358,3 +358,13 @@ void create_cluster_files(char* prefix, split_set s, dataset ds) {
     
   }
 }
+
+void free_split_set_and_associated_clusters(split_set s) {
+
+  int i;
+  for(i=0;i<s.n_clusters;i++) {
+    free(s.clusters[i].members);
+  }
+  free(s.clusters);
+}
+    
