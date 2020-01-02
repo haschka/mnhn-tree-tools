@@ -1,6 +1,7 @@
 CC=gcc
 #CFLAGS=-g
 CFLAGS=-O2 -march=native -ftree-vectorize
+#CFLAGS=-g -fsanitize=address
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
@@ -12,7 +13,8 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      adaptive_clustering_SW_GPU adaptive_clustering_PCA \
      adaptive_clustering_kmer_L1 adaptive_clustering_kmer_L2 \
      split_set_to_fasta print_connections \
-     split_set_to_matrix_line split_set_to_matrix_annotation
+     split_set_to_matrix_line split_set_to_matrix_annotation \
+     split_sets_to_newick
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -29,7 +31,7 @@ dbscan_SW_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
  -o dbscan_SW_GPU.o
 dbscan_L1.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L1 -o dbscan_L1.o
-dbscan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
+dbscsets[i].n_clustersan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L2 -o dbscan_L2.o 
 dataset.o: dataset.c dataset.h binary_array.h
 	$(CC) $(CFLAGS) -c dataset.c -o dataset.o
@@ -113,6 +115,11 @@ adaptive_clustering_kmer_L1: adaptive_clustering.c dbscan.h dataset.h cluster.h\
 split_set_to_fasta: split_set_to_fasta.c dataset.h cluster.h dataset.o \
                     cluster_io.o binary_array.o
 	$(CC) $(CFLAGS) split_set_to_fasta.c -o ./bin/split_set_to_fasta \
+ dataset.o cluster_io.o binary_array.o $(MATH)
+
+split_sets_to_newick: split_sets_to_newick.c dataset.h cluster.h dataset.o \
+                    cluster_io.o binary_array.o
+	$(CC) $(CFLAGS) split_sets_to_newick.c -o ./bin/split_sets_to_newick \
  dataset.o cluster_io.o binary_array.o $(MATH)
 
 split_set_to_matrix_line: split_set_to_matrix_line.c dataset.h cluster.h \
