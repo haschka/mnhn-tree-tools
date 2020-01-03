@@ -46,7 +46,7 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
 	current_node->id = (char*)malloc(sizeof(char)*20);
 	current_node->n_members =
 	  sets[i-1].clusters[c[i-1][j].connections[k]].n_members;
-	sprintf(current_node->id,"L%iC%iN%i",
+	sprintf(current_node->id,"L%iC%iN%i:1",
 		i-1,
 		c[i-1][j].connections[k],
 		current_node->n_members);
