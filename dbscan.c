@@ -255,13 +255,17 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
     
 
     err = clEnqueueReadBuffer(ocl.cmdq[i], ocl.acc_distances[i],
-			      CL_TRUE, 0,
+			      CL_FALSE, 0,
 			      acc_distance_size*sizeof(int),
 			      ocl.local_distances+pointer_offset,
 			      0,NULL,NULL);
     pointer_offset+=acc_distance_size;
   }
-
+  
+  for(i=0;i<ocl.num_devs;i++) {
+    clFinish(ocl.cmdq[i]);
+  }
+  
   nb.n_members = 0;
   for(i =0;i<ds.n_values;i++) {
     if(ocl.local_distances[i] <= epsilon) {
