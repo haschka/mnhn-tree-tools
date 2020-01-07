@@ -81,6 +81,34 @@ unique_sequences get_sequence_multiplicities(dataset ds) {
   return(us);
 }
 
+void dataset_to_fasta(FILE* f, dataset ds) {
+
+  int j, k;
+
+  for(j=0;j < ds.n_values; j++) {
+    fprintf(f,">sequence_%i\n",j);
+    for ( k = 0;
+	  k < (strlen(ds.sequences[j])-1);
+	  k++) {
+      if( k != 0 && k%50 == 0 ) {
+	fprintf(f, "\n");
+	fputc(ds.sequences[j][k],f);
+      } else {
+	fputc(ds.sequences[j][k],f);
+      }
+    }
+    if ( (strlen(ds.sequences[j])-1) != 0 &&
+	 (strlen(ds.sequences[j])-1) %50 == 0 ) {
+      fprintf(f, "\n");
+      fputc(ds.sequences[j][k],f);
+    } else {
+      fputc(ds.sequences[j][k],f);
+    }
+    fprintf(f, "\n");
+  }
+}
+  
+
 void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us) {
 
   int i,k;

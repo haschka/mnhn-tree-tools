@@ -161,3 +161,5 @@ unique_sequences get_sequence_multiplicities(dataset ds);
  *            get_sequence_multiplicities.
  */
 void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
+
+void dataset_to_fasta(FILE* outfile, dataset ds);

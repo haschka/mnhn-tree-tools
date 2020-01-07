@@ -310,7 +310,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
   }
 
   /*  nb.members = (int*)realloc((void*)nb.members,sizeof(int)*nb.n_members); */
-  qsort(nb.members,nb.n_members,sizeof(int),compare);
   free(work);
   return(nb);
 }
