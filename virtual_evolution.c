@@ -17,7 +17,6 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 						    int max_time,
 						    int mutation_rate) {
   int i,j;
-  
   dataset ds;
   
   int partition_size;
@@ -68,7 +67,7 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 
   for(i=1;i<partition_size;i++) {
     ds.sequences[i] = (char*)malloc(sizeof(char)*(ds.max_sequence_length+1));
-    memcpy(ds.sequences+i,ds.sequences,sizeof(char)*ds.max_sequence_length);
+    memcpy(ds.sequences[i],ds.sequences[0],sizeof(char)*ds.max_sequence_length);
     ds.sequences[i][ds.max_sequence_length]= 0;
   }
 
@@ -79,8 +78,9 @@ dataset generate_dataset_using_evolution_simulation(int seed,
     mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
     mutation_time_i = (int)mutation_time_d;
 
-    printf("Partition %i will be created after %i time\n",
-	   partition_count+1, mutation_time_i);
+    printf("Partition %3i will be created after %6i cycles of %6i "
+	   "mutations/partition\n",
+	   partition_count+1, mutation_time_i, mutation_rate);
     
     for(i=0;i<mutation_time_i;i++) {
       for(j=0;j<mutation_rate*partition_count;j++) {
@@ -113,12 +113,40 @@ dataset generate_dataset_using_evolution_simulation(int seed,
     for(i=0;i<partition_size;i++) {
       ds.sequences[partition_size*partition_count+i] =
 	(char*)malloc(sizeof(char)*(ds.max_sequence_length+1));
-      memcpy(ds.sequences+partition_size*partition_count+i,
+      memcpy(ds.sequences[partition_size*partition_count+i],
 	     ds.sequences[mutation_sequence_i],
 	     sizeof(char)*ds.max_sequence_length);
       ds.sequences[i][ds.max_sequence_length]= 0;
     }
     partition_count++;
+  }
+
+
+  mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
+  mutation_time_i = (int)mutation_time_d;
+
+  printf("All partitions will be mutated for  %6i cycles of %6i "
+	 "mutations/partition\n",mutation_time_i, mutation_rate);
+    
+  for(i=0;i<mutation_time_i;i++) {
+    for(j=0;j<mutation_rate*partition_count;j++) {
+      mutation_site_d =
+	(double)ds.max_sequence_length*(double)(rand()/(double)RAND_MAX);
+      mutation_site_i = (int)mutation_site_d;
+
+      mutation_sequence_d =
+	(double)partition_size
+	*(double)partition_count
+	*((double)rand()/(double)RAND_MAX);
+
+      mutation_sequence_i = (int)mutation_sequence_d;
+	
+      random_value_d=4*((double)rand()/(double)RAND_MAX);
+      random_value_i = (char)random_value_d;
+
+      ds.sequences[mutation_sequence_i][mutation_site_i] = random_value_i;
+	
+    }
   }
 
   for(i=0;i<ds.n_values;i++) {
@@ -163,6 +191,7 @@ int main(int argc, char** argv) {
 	   " [int] maximum time between amplification creation\n"
 	   " [int] mutation rate\n"
 	   " [FASTA] output file\n");
+    return(1);
   }
 
   sscanf(argv[1],"%i",&seed);

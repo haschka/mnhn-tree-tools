@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-g
-#CFLAGS=-O2 -march=native -ftree-vectorize
+#CFLAGS=-g
+CFLAGS=-O2 -march=native -ftree-vectorize
 #CFLAGS=-g -fsanitize=address
 LAPACK=-llapack
 MATH=-lm
