@@ -17,6 +17,12 @@ int main(int argc, char** argv) {
   
   cluster_connections** connections =
     (cluster_connections**)malloc(sizeof(cluster_connections*)*argc);
+
+  if(argc < 2) {
+    printf("Arguments are: "
+	   " [file1 ... filen] split_sets obtainted from adaptive clustering \n"
+           "                   calculations in order from lowest to hight\n");
+  }
   
   for(i=1;i<argc;i++) {
     s[i-1] = read_split_set(argv[i]);
