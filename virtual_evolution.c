@@ -116,7 +116,7 @@ dataset generate_dataset_using_evolution_simulation(int seed,
       memcpy(ds.sequences[partition_size*partition_count+i],
 	     ds.sequences[mutation_sequence_i],
 	     sizeof(char)*ds.max_sequence_length);
-      ds.sequences[i][ds.max_sequence_length]= 0;
+      ds.sequences[partition_size*partition_count+i][ds.max_sequence_length]=0;
     }
     partition_count++;
   }
@@ -212,6 +212,7 @@ int main(int argc, char** argv) {
 						   mutation_rate);
 
   dataset_to_fasta(f,ds);
+  free_sequences_from_dataset(ds);
   fclose(f);
 
   return(0);

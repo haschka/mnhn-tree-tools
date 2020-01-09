@@ -17,8 +17,10 @@ int main(int argc, char** argv) {
 
   ds = dataset_from_fasta(f);          
   cs = obtain_consens_from_dataset(ds);
+  free_sequences_from_dataset(ds);
   
   print_consensus_statistics(stdout,cs);
+  free_consens(cs);
 }
   
   

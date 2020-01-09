@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     printf("Arguments are: \n"
 	   " [file] Sequences in FASTA \n"
 	   " [file] Corresponding PCA from kmers \n"
-	   " dimensions: dimensions in projections file"
+	   " dimensions: dimensions in projections file \n"
 	   " Epsilon \n"
 	   " minPoints \n"
 	   " output-files prefix (FASTA) \n"
@@ -61,6 +61,7 @@ int main(int argc, char** argv) {
       create_cluster_files_with_values(argv[7], set_of_clusters,ds);
     }
   }
-
+  free_split_set_and_associated_clusters(set_of_clusters);
+  free_dataset(ds);
 }
   

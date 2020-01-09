@@ -528,7 +528,7 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
   free(b_point);
   
   /*  nb.members = (int*)realloc((void*)nb.members,sizeof(int)*nb.n_members); */
-  qsort(nb.members,nb.n_members,sizeof(int),compare);
+  //qsort(nb.members,nb.n_members,sizeof(int),compare);
   return(nb);
 }
 #endif
@@ -670,6 +670,8 @@ static inline void expand_cluster(int point,
 	  nb.members = (int*)realloc((void*)nb.members,
 	  merge_counter*sizeof(int));
 	*/
+      } else {
+	free(nb_of_nb.members);
       }
     }
     if(!cluster_member[nb_unsorted.members[i]]) {
@@ -685,6 +687,7 @@ static inline void expand_cluster(int point,
 
   free(nb_unsorted.members);
   free(nb.members);
+  free(merge);
 }
 
 split_set

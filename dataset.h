@@ -135,6 +135,8 @@ data_shape shape_from_kmer_file(int infile);
  */ 
 consens obtain_consens_from_dataset(dataset ds);
 
+void free_consens(consens cs);
+
 /*! \brief A function to print the consensus statistics in a readable
  *         manner to a file.
  *  \param f a pointer to an opened writeable file.

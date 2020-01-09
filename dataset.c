@@ -416,6 +416,14 @@ void load_projections_from_file_into_dataset(FILE* projections,
   }
 }
 
+void free_consens(consens cs) {
+
+  int i;
+  for(i=0;i<4;i++) {
+    free(cs.absolute_frequencies[i]);
+    free(cs.relative_frequencies[i]);
+  }
+}
 
 consens obtain_consens_from_dataset(dataset ds) {
 
@@ -579,6 +587,7 @@ void free_sequences_from_dataset(dataset ds) {
   for(i=0;i<ds.n_values;i++) {
     free(ds.sequences[i]);
   }
+  free(ds.sequence_lengths);
   free(ds.sequences);
 }
 
