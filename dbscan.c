@@ -189,8 +189,6 @@ opencl_stuff opencl_initialization(dataset ds) {
 			       gpu_sequence_dataset_buffer,
 			       0,NULL,NULL);
 
-    free(gpu_sequence_dataset_buffer);
-    
     if (i == 0) {
       acc_distance_size = ds.n_values/num_devs + ds.n_values%num_devs;
     } else {
@@ -211,6 +209,9 @@ opencl_stuff opencl_initialization(dataset ds) {
 			 3,sizeof(int),&seq_offset);
 			       
   }
+  free(gpu_sequence_dataset_buffer);
+    
+
   ocl.num_devs =num_devs;
 
   free(devices);
