@@ -186,6 +186,8 @@ opencl_stuff opencl_initialization(dataset ds) {
 			       sizeof(char)*300*ds.n_values,
 			       gpu_sequence_dataset_buffer,
 			       0,NULL,NULL);
+
+    free(gpu_sequence_dataset_buffer);
     
     if (i == 0) {
       acc_distance_size = ds.n_values/num_devs + ds.n_values%num_devs;
@@ -208,7 +210,21 @@ opencl_stuff opencl_initialization(dataset ds) {
 			       
   }
   ocl.num_devs =num_devs;
+
+  free(devices);
+  free(programs);
+  
   return(ocl);
+}
+
+void opencl_destroy(opencl_stuff ocl) {
+  free(ocl.cmdq);
+  free(ocl.kernel);
+  free(ocl.contexts);
+  free(ocl.acc_sequences);
+  free(ocl.acc_sequence_lengths);
+  free(ocl.acc_distances);
+  free(ocl.local_distances);
 }
   
 #endif

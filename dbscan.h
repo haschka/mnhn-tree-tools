@@ -26,6 +26,7 @@ split_set dbscan_L2(dataset ds, float epsilon, int minpts);
 split_set dbscan_SW(dataset ds, float epsilon, int minpts);
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 opencl_stuff opencl_initialization(dataset ds);
+void opencl_destroy(opencl_stuff ocl);
 split_set dbscan_SW_GPU(dataset ds, float epsilon, int minpts,
 			opencl_stuff ocl);
 void adaptive_dbscan(split_set (*dbscanner) (dataset,

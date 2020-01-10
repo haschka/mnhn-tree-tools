@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   ocl = opencl_initialization(ds);
   set_of_clusters = dbscan_SW_GPU(ds, epsilon, minpts, ocl);
+  opencl_destroy(ocl);
 #else
   set_of_clusters = dbscan_SW(ds, epsilon, minpts);
 #endif
@@ -66,5 +67,6 @@ int main(int argc, char** argv) {
     create_cluster_files(argv[4], set_of_clusters, ds);
   }
   free_sequences_from_dataset(ds);
+  free_split_set_and_associated_clusters(set_of_clusters);
 }
   

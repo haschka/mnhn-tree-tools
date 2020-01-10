@@ -29,6 +29,6 @@ int main(int argc, char** argv) {
   write_kmer_base(stdout, freq);
 
   free_kmer_frequencies(freq);
-  free_dataset(ds);
+  free_sequences_from_dataset(ds);
     
 }

@@ -63,7 +63,7 @@ data_shape shape_from_input_file(int infile) {
     if ( f_buffer[i] == '\n' ) s.n_samples++;
     i++;
   }
-    
+  free(f_buffer);
   return(s);
 }
 
@@ -515,23 +515,29 @@ int main(int argc, char** argv){
   printf("Means complete \n");
   
   corr = feature_covariance_matrix(in_data, means, shape, n_threads);
-
+  free(means);
   //corr = feature_correlation_matrix(normalized_data, shape);
   
   printf("Covariance complete\n");
   
   ei = eigen_from_corr(corr, shape);
-
+  free(corr);
+  
   printf("Eigenspace obtained\n");
 
   //val_vec_test(corr, ei, shape);
   
   projections =  obtain_projections(dimensions, in_data,
 				    ei, shape, n_threads);
+
+  free(in_data);
   
   print_eigenvalues(eig_file, shape, ei);
+  free(ei.eigenvalues);
+  free(ei.eigenvectors); 
   print_projections(proj_file, projections, dimensions, shape);
-
+  free(projections);
+  
   fclose(infilep);
   fclose(proj_file);
   fclose(eig_file);  

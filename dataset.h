@@ -93,7 +93,7 @@ void free_values_from_dataset(dataset ds);
  */
 void free_sequences_from_dataset(dataset ds);
 
-/*! \brief a function that loads projections from a PCA calculation 
+/*! \brief a function that loads projections from a PCA calculatxion 
  *         into a dataset as supplimental data. 
  *  \param projections an opened readable file pointer to 
  *                     a file containing the projections
