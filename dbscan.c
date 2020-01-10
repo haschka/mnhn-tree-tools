@@ -160,7 +160,7 @@ opencl_stuff opencl_initialization(dataset ds) {
       printf("Build Error Log: \n%s\n",BuildErrorLog); 
     }
 
-    free(clSource);
+    //free(clSource);
     
     ocl.kernel[i] = clCreateKernel(programs[i],"gpuwaterman",&err);
 
@@ -213,8 +213,8 @@ opencl_stuff opencl_initialization(dataset ds) {
 
   ocl.num_devs =num_devs;
 
-  free(devices);
-  free(programs);
+  //free(devices);
+  //free(programs);
   
   return(ocl);
 }
