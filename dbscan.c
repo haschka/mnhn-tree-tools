@@ -160,6 +160,8 @@ opencl_stuff opencl_initialization(dataset ds) {
       printf("Build Error Log: \n%s\n",BuildErrorLog); 
     }
 
+    free(clSource);
+    
     ocl.kernel[i] = clCreateKernel(programs[i],"gpuwaterman",&err);
 
     ocl.acc_sequence_lengths[i] = clCreateBuffer(ocl.contexts[i],
@@ -857,6 +859,7 @@ void adaptive_dbscan(
     epsilon_start = epsilon_start/2;
     printf("Trying new starting point \n");
 
+    free_split_set_and_associated_clusters(set_of_split_sets[0]);
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
     set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl);
 #else
@@ -868,6 +871,10 @@ void adaptive_dbscan(
   printf("Sarting with %i clusters\n", set_of_split_sets[0].n_clusters);
   
   not_covered = data_not_in_clusters(set_of_split_sets[0], ds);
+
+  if(not_covered.n_members > 0) {
+	free(not_covered.members);
+  }
 
   printf("Coverage at initial point: %f\n",
 	 (float)1.f-(float)not_covered.n_members/(float)ds.n_values);
@@ -921,6 +928,10 @@ void adaptive_dbscan(
     eps_count++;
   }while(new_split_set.n_clusters != 1);
 
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  opencl_destroy(ocl);
+#endif
+  
   printf("Connections found: \n");
   for(i=0;i<(count+1);i++) {
     
@@ -955,6 +966,7 @@ void adaptive_dbscan(
   for(i=0;i<(count+1);i++) {
     free_split_set_and_associated_clusters(set_of_split_sets[i]);
   }
+  free(set_of_split_sets);
 }
   
   

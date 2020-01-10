@@ -137,7 +137,14 @@ int main(int argc, char** argv) {
 		   epsilon_inc,
 		   minpts,
 		   split_files_prefix);
-  		   
+
+#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
+  free_sequences_from_dataset(ds);
+#elif defined (_CLUSTER_PCA)
+  free_dataset(ds);
+#elif defined (_CLUSTER_KMER_L1) || defined(_CLUSTER_KMER_L2)
+  free_values_from_dataset(ds);
+#endif
 }
   
   

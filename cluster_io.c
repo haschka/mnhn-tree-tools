@@ -176,6 +176,9 @@ generate_split_set_relation(split_set ancient, split_set new) {
 	counter++;
 
       }
+      if (intersection.n_members > 0) {
+	free(intersection.members);
+      }
     }
     connections_ancient_to_new[i].connections =
       (int*)realloc(connections_ancient_to_new[i].connections,
@@ -303,7 +306,7 @@ cluster data_not_in_clusters(split_set s, dataset ds) {
   out.id = -1;
   out.members = (int*)realloc(out.members,sizeof(int)*count);
   out.n_members = count;
-
+  free(out_b);
   return(out);
 }
 
