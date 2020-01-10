@@ -210,7 +210,6 @@ opencl_stuff opencl_initialization(dataset ds) {
 			       
   }
   free(gpu_sequence_dataset_buffer);
-    
 
   ocl.num_devs =num_devs;
 
