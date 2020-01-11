@@ -59,8 +59,8 @@ opencl_stuff opencl_initialization(dataset ds) {
   
   opencl_stuff ocl;
 
-  cl_platform_id platform; 
-  cl_context_properties contprop[3];
+  cl_platform_id* platform; 
+  cl_context_properties* contprop;
   cl_program* programs;
   
   cl_uint num_gpus;
@@ -91,14 +91,14 @@ opencl_stuff opencl_initialization(dataset ds) {
 	   ds.sequences[i],ds.sequence_lengths[i]+1);
   }
 
+  platform = (cl_platform_id*)malloc(sizeof(cl_platform_id));
   
-  
-  clGetPlatformIDs(1, &platform,NULL);
-  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, NULL, &num_gpus);
+  clGetPlatformIDs(1, platform,NULL);
+  err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_GPU, 0, NULL, &num_gpus);
   if (err == CL_DEVICE_NOT_FOUND) num_gpus = 0;
-  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 0, NULL, &num_cpus);
+  err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_CPU, 0, NULL, &num_cpus);
   if (err == CL_DEVICE_NOT_FOUND) num_cpus = 0;
-  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ACCELERATOR, 0, NULL, &num_acc);
+  err = clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_ACCELERATOR, 0, NULL, &num_acc);
   if (err == CL_DEVICE_NOT_FOUND) num_acc = 0;
 
   if (num_acc == 0 && num_gpus == 0 && num_cpus == 0) {
@@ -108,16 +108,16 @@ opencl_stuff opencl_initialization(dataset ds) {
   
   if ( num_gpus > 0 ) {
     devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_gpus);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, num_gpus, devices, NULL);
+    clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_GPU, num_gpus, devices, NULL);
     num_devs = num_gpus;
   } else if (num_acc > 0) {
     devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_acc);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_ACCELERATOR,
+    clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_ACCELERATOR,
 		   num_acc, devices, NULL);
     num_devs = num_acc;
   } else if (num_cpus > 0 ) {
     devices = (cl_device_id*)malloc(sizeof(cl_device_id)*num_cpus);
-    clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, num_cpus, devices, NULL);
+    clGetDeviceIDs(platform[0], CL_DEVICE_TYPE_CPU, num_cpus, devices, NULL);
     num_devs = num_cpus;
   }
 
@@ -131,9 +131,11 @@ opencl_stuff opencl_initialization(dataset ds) {
   ocl.acc_distances = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
 
   ocl.local_distances = (int*)malloc(sizeof(int)*ds.n_values);
+
+  contprop = (cl_context_properties*)malloc(sizeof(cl_context_properties)*3);
   
   contprop[0] = CL_CONTEXT_PLATFORM;
-  contprop[1] = (cl_context_properties)platform;
+  contprop[1] = (cl_context_properties)platform[0];
   contprop[2] = 0;
 
   clSource = load_program_source(clSourceFile);
@@ -212,6 +214,11 @@ opencl_stuff opencl_initialization(dataset ds) {
   free(gpu_sequence_dataset_buffer);
 
   ocl.num_devs =num_devs;
+  ocl.devices = devices;
+  ocl.platform = platform;
+  ocl.contprop = contprop;
+  ocl.programs = programs;
+  
 
   //free(devices);
   //free(programs);
@@ -227,6 +234,10 @@ void opencl_destroy(opencl_stuff ocl) {
   free(ocl.acc_sequence_lengths);
   free(ocl.acc_distances);
   free(ocl.local_distances);
+  free(ocl.programs);
+  free(ocl.devices);
+  free(ocl.contprop);
+  free(ocl.platform);
 }
   
 #endif

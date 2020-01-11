@@ -9,6 +9,10 @@ typedef struct {
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 typedef struct {
+  cl_device_id* devices;
+  cl_platform_id* platform;
+  cl_context_properties* contprop;
+  cl_program* programs;
   cl_command_queue* cmdq;
   cl_kernel* kernel;
   cl_context* contexts;
