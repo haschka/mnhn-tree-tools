@@ -597,7 +597,8 @@ static inline void expand_cluster(int point,
   neighbors nb_unsorted;
 
   nb_unsorted.members = (int*)malloc(sizeof(int)*ds.n_values);
-
+  memset(nb_unsorted.members,0,sizeof(int)*ds.n_values);
+  
   merge = (int*)malloc(ds.n_values*sizeof(int));
 
   memcpy(nb_unsorted.members,nb.members,sizeof(int)*nb.n_members);
@@ -609,8 +610,10 @@ static inline void expand_cluster(int point,
   cl->n_members++;
 
   for(i=0;i < nb_unsorted.n_members;i++) {
-    if(!get_value_in_binary_array_at_index(visited,nb_unsorted.members[i])) {
-      set_value_in_binary_array_at_index(visited,nb_unsorted.members[i]);
+    if(!get_value_in_binary_array_at_index(visited,
+					   (size_t)nb_unsorted.members[i])) {
+      set_value_in_binary_array_at_index(visited,
+					 (size_t)nb_unsorted.members[i]);
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
       nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds, ocl);
 #else
@@ -766,8 +769,8 @@ dbscan_SW_GPU
   }
 
   for(i=0;i<ds.n_values;i++) {
-    if(!get_value_in_binary_array_at_index(visited,i)) {
-      set_value_in_binary_array_at_index(visited,i);
+    if(!get_value_in_binary_array_at_index(visited,(size_t)i)) {
+      set_value_in_binary_array_at_index(visited,(size_t)i);
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
       nb = region_query(i, epsilon, ds, ocl);
 #else

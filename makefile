@@ -1,7 +1,7 @@
-CC=gcc
-CFLAGS=-g
-#CFLAGS=-O2 -march=native -ftree-vectorize
-#CFLAGS=-g -fsanitize=address
+CC=gcc-9.2.0
+#CFLAGS=-g
+#CFLAGS= -g -O1 -march=native -ftree-vectorize
+CFLAGS=-g -O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
