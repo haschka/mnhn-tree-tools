@@ -55,4 +55,6 @@ void free_split_set_and_associated_clusters(split_set s);
 tree_node* generate_tree(int n_layers, cluster_connections** c,
 			 split_set* sets);
 void print_tree(FILE* f, tree_node* root);
-
+cluster cluster_from_sequence_in_dataset(dataset ds,
+					 char* seq,
+					 size_t seq_len);

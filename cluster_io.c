@@ -65,8 +65,6 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
   return(nodes[n_layers-1]);
 }
 	  
-				      
-
 void print_tree(FILE*f, tree_node* root)
 {
   tree_node* n;
@@ -195,7 +193,6 @@ cluster intersection_of_clusters(cluster a, cluster b) {
 
   int i, j, count;
   int search_result;
-
   
   cluster intersection;
   
@@ -277,7 +274,34 @@ void print_cluster_matrix_view(FILE*f, split_set s, dataset ds) {
   fprintf(f,"%i\n", matrix_line[ds.n_values-1]);
   free(matrix_line);
 }
-      
+
+cluster cluster_from_sequence_in_dataset(dataset ds,
+					 char* seq,
+					 size_t seq_len) {
+
+  int i,j;
+
+  cluster cl;
+
+  cl.members = (int*)malloc(sizeof(int)*ds.n_values);
+  cl.n_members = 0;
+
+  i = 0;
+  while(i<ds.n_values) {
+    if (ds.sequence_lengths[i] == seq_len) {
+      for(j=0;j<seq_len;j++) {
+	if(ds.sequences[i][j] != seq[j]) {
+	  goto sequence_false;
+	}
+      }
+      cl.members[cl.n_members++] = i;
+    }
+  sequence_false:
+    i++;
+  }
+  cl.members = (int*)realloc(cl.members,sizeof(int)*cl.n_members);
+  return(cl);
+}
 
 cluster data_not_in_clusters(split_set s, dataset ds) {
 
