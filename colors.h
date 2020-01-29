@@ -1,3 +1,8 @@
+/*! \file colors.h
+ *  \brief defines shorthands for ANSI escape sequences that color fonts
+ *         in the terminal. i.e. ANSI_COLOR_RED is defined as "\x1b[31m".
+ */ 
+
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
