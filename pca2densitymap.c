@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
   FILE* fasta_f;
   FILE* projection_f;
 
-  density_map map;
+  density_map lmap, map;
 
   float interval_length;
 
@@ -48,14 +48,18 @@ int main(int argc, char** argv) {
   load_projections_from_file_into_dataset(projection_f,input_dimensions,&ds);
   fclose(projection_f);
 
-  map = generate_density_map_from_dataset(ds, output_dimensions,
+  lmap = generate_density_map_from_dataset(ds, output_dimensions,
 					  interval_length);
+
+  map = longmap_to_char_map(lmap);
 
   switch(output_dimensions) {
   case 2:
     save_2d_density_to_png(argv[6], map);
+    break;
   case 3:
     save_3d_density_to_pngs(argv[6], map);
+    break;
   default:
     return(1);
   }

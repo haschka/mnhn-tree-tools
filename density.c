@@ -52,6 +52,8 @@ density_map generate_density_map_from_dataset(dataset ds, int dim,
 
   size_t offset, dimension_multiplier;
   
+  size_t w_index, h_index, z_index;
+  
   map.dimensions = dim;
 
   n_intensities = 1;
@@ -59,25 +61,47 @@ density_map generate_density_map_from_dataset(dataset ds, int dim,
     min_max[i] = get_min_max_in_dimension_from_dataset(ds,i);
     map.n_values_per_dimension[i] =
       (size_t)((float)fabsf(min_max[i][1]-min_max[i][0])
-	       /(float)interval_length);
+	       /(float)interval_length)+1;
     n_intensities *= map.n_values_per_dimension[i];
     map.shift[i] = 0 - min_max[i][0];
   }
-
+  
   intensities = (unsigned long*)malloc(sizeof(unsigned long)*n_intensities);
+  memset(intensities,0,sizeof(unsigned long)*n_intensities);
+
+  
   
   for (i=0; i<ds.n_values; i++) {
     offset = 0;
     dimension_multiplier = 1;
-    for (j = 0 ; j < dim ; j++) {
-      offset += (size_t)((float)dimension_multiplier
-			 *fabsf((float)ds.values[j][i]
-			   +(float)map.shift[j])/(float)interval_length);
-      dimension_multiplier *= map.n_values_per_dimension[j];
+    switch (dim) {
+    case 2:
+      w_index = (size_t)((fabsf((float)ds.values[0][i]
+				+(float)map.shift[0])/(float)interval_length));
+      h_index = (size_t)((fabsf((float)ds.values[1][i]
+				+(float)map.shift[1])/(float)interval_length));
+      intensities[h_index*map.n_values_per_dimension[0]
+		  +w_index]++;
+      break;
+    case 3:
+      w_index = (size_t)((fabsf((float)ds.values[0][i]
+				+(float)map.shift[0])/(float)interval_length));
+      h_index = (size_t)((fabsf((float)ds.values[1][i]
+				+(float)map.shift[1])/(float)interval_length));
+      z_index = (size_t)((fabsf((float)ds.values[2][i]
+				+(float)map.shift[2])/(float)interval_length));
+      intensities[z_index
+		  *map.n_values_per_dimension[1]*map.n_values_per_dimension[0]
+		  +h_index
+		  *map.n_values_per_dimension[0]
+		  +w_index]++;
+      break;
+    default:
+      printf("Dimension error!\n");
+      _exit(1);
     }
-    intensities[offset] += 1;
   }
-
+  
   map.conversion_factor = 1;
   map.value_size = sizeof(unsigned long);
   map.intensities = (void*) intensities;
@@ -116,7 +140,18 @@ density_map longmap_to_char_map(density_map map) {
   factor = (float)255.f/(float)max;
   
   for(i=0; i<n_intensities;i++) {
-    c_intensities[i] = factor*l_intensities[i];
+    /*
+    if (l_intensities[i] > 0) {
+      c_intensities[i]=255;
+    } else {
+      c_intensities[i]=0;
+    };
+    */
+    if ( factor*l_intensities[i] > 255 ) {
+      c_intensities[i] = 255 ;
+    } else {
+      c_intensities[i] = factor*l_intensities[i];
+    }
   }
 
   cmap.intensities = (void*)c_intensities;
