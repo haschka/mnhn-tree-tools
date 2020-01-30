@@ -46,8 +46,7 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  if ( NULL == (fasta_f = fopen(argv[2], "r"))) file_error(argv[2]);
-  projection_f = fopen(argv[2], "r");
+  if ( NULL == (projection_f = fopen(argv[2], "r"))) file_error(argv[2]);
   load_projections_from_file_into_dataset(projection_f,dimensions,&ds);
   fclose(projection_f);
 

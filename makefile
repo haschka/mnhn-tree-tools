@@ -1,11 +1,12 @@
 CC=gcc
-#CFLAGS=-g
+CFLAGS=-g
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-CFLAGS=-g -O2 -march=native -ftree-vectorize
+#CFLAGS=-g -O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
 OPENCL=-lOpenCL
+PNG=-lpng
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
@@ -15,7 +16,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      split_set_to_fasta print_connections \
      split_set_to_matrix_line split_set_to_matrix_annotation \
      split_sets_to_newick virtual_evolution simulation_verification \
-     find_sequence_in_split_sets tree_map_for_sequence
+     find_sequence_in_split_sets tree_map_for_sequence pca2densitymap
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -38,6 +39,8 @@ dataset.o: dataset.c dataset.h binary_array.h
 	$(CC) $(CFLAGS) -c dataset.c -o dataset.o
 kmers.o: kmers.c dataset.h kmers.h
 	$(CC) $(CFLAGS) -c kmers.c -o kmers.o
+density.o: density.c density.h dataset.h
+	$(CC) $(CFLAGS) -c density.c -o density.o
 
 fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 	$(CC) $(CFLAGS) fasta2kmer.c -o ./bin/fasta2kmer dataset.o kmers.o \
@@ -46,6 +49,11 @@ fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 kmer2pca: kmer2pca.c 
 	$(CC) $(CFLAGS) kmer2pca.c -o ./bin/kmer2pca -mavx $(PTHREAD) $(MATH) \
  $(LAPACK)
+
+pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
+                binary_array.o density.o 
+	$(CC) $(CFLAGS) pca2densitymap.c -o ./bin/pca2densitymap \
+ dataset.o binary_array.o density.o $(PNG) $(MATH)
 
 virtual_evolution: virtual_evolution.c dataset.h binary_array.h \
                    dataset.o binary_array.o
