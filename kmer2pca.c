@@ -51,7 +51,9 @@ data_shape shape_from_input_file(int infile) {
 
   char* f_buffer = (char*)malloc(sizeof(char)*size);
 
-  read(infile, f_buffer, size);
+  if (size != read(infile, f_buffer, size)) {
+    printf("Warning could not load file into memory\n");
+  }
 
   i = 0;
   while( f_buffer[i] != '\n') {
