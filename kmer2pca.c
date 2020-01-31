@@ -35,6 +35,8 @@ pthread_mutex_t lock;
 
 data_shape shape_from_input_file(int infile) {
 
+  int i;
+  
   data_shape s;
   
   unsigned char current_character;
@@ -42,6 +44,10 @@ data_shape shape_from_input_file(int infile) {
   off_t size;
 
   size_t i;
+
+  size_t chunk = 4096; 
+  size_t n_chunks;
+  size_t rest_size;
   
   s.n_features = 0;
   s.n_samples = 0;
@@ -51,10 +57,20 @@ data_shape shape_from_input_file(int infile) {
 
   char* f_buffer = (char*)malloc(sizeof(char)*size);
 
-  if (size != read(infile, f_buffer, size)) {
-    printf("Warning could not load file into memory\n");
-  }
+  n_chunks = size/chunk;
+  rest_size = size%chunk;
 
+  for(i=0;i<n_chunks;i++) {
+    if (chunk != read(infile, (f_buffer+(i*chunk)), chunk)) {
+      printf("Warning could not load file into memory\n");
+      _exit(1);
+    }
+  }
+  if (rest_size != read(infile, (f_buffer+(n_chunks*chunk)), rest_size)) {
+    printf("Warning could not load file into memory\n");
+    _exit(1);
+  }
+    
   i = 0;
   while( f_buffer[i] != '\n') {
     if ( f_buffer[i] == '\t') s.n_features++;
