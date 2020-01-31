@@ -35,8 +35,6 @@ pthread_mutex_t lock;
 
 data_shape shape_from_input_file(int infile) {
 
-  int i;
-  
   data_shape s;
   
   unsigned char current_character;
