@@ -51,10 +51,32 @@ void free_kmers(char** kmers, size_t kmer_length);
 
 void* frequencies_from_dataset_thread_handler(void* arg);
 
+/*! \brief Allows you to obtain the frequencies of k_mers occuring in 
+ *         sequences accross a dataset.
+ *  This function generates a kmer_frequencies structure that corresponds
+ *  to a k_mer representation of the given dataset.
+ *  \param ds the dataset to containing sequences to represent as 
+ *            k_mer frequency vectors
+ *  \param kmer_length the length of the k_mers to obtain the frequencies 
+ *                     form. Currently only kmers up to the length of 15 are
+ *                     supported.
+ *  \param n_threads the number of threads to use for this run
+ */
 kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
 					  int n_threads);
 
+/*! \brief Write kmer_frequencies out to a file. 
+ *  This function allows you to write the frequencies obtained for instance
+ *  from a dataset of sequences out to a file
+ *  \param f A file pointer that is opened and writeable.
+ *  \param freq A kmer_frequencies structure holding the frequencies 
+ *              to be written to the file.
+ */
 void write_kmer_base(FILE* f,kmer_frequencies freq);
 
+/*! \brief a function that frees the memory allocated to a kmer_frequencies
+ *         structure.
+ *  \param freq the structure to be freed
+ */
 void free_kmer_frequencies(kmer_frequencies freq);
 
