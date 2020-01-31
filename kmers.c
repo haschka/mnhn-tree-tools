@@ -216,7 +216,7 @@ kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
 
     stride = freq.n_seq/n_threads;
     
-    for(i=stride*n_threads;i<freq.n_seq%n_threads;i++) {
+    for(i=stride*n_threads;i<(stride*n_threads)+(freq.n_seq%n_threads);i++) {
       for(j=0;j<freq.n_kmers;j++) {
 	freq.frequencies[i][j] =
 	  frequence_of_kmer_in_sequence(kmers[j],ds.sequences[i],kmer_length);
