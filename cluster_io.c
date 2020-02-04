@@ -446,7 +446,7 @@ void create_cluster_files(char* prefix, split_set s, dataset ds) {
 
   char file_name[256];
 
-  char i_buffer[4];
+  char i_buffer[6];
   
   for ( i = 0; i< s.n_clusters; i++) {
 

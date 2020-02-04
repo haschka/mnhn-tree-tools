@@ -68,7 +68,7 @@ typedef struct {
 
 /*! \brief a function that generates a dataset structure from a 
  *         fasta file.
- *  \param an opened readable file pointer pointing to a fasta file.
+ *  \param in an opened readable file pointer pointing to a fasta file.
  *  \return a dataset that holds the sequences in the fasta file.
  */
 dataset dataset_from_fasta(FILE* in);
@@ -151,7 +151,7 @@ void sort_unique_sequences(unique_sequences us);
 
 /*! \brief A function to obtain an index and multiplicities of unique
  *         sequences in a dataset.
- *  \param the dataset to find unique sequences in.
+ *  \param ds the dataset to find unique sequences in.
  */
 unique_sequences get_sequence_multiplicities(dataset ds);
 
@@ -164,4 +164,8 @@ unique_sequences get_sequence_multiplicities(dataset ds);
  */
 void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
 
+/*! \brief Writes a whole dataset to a fasta file.
+ *  \param outfile a opened writeable file pointer to write to.
+ *  \param ds the dataset to be written to the file 
+ */
 void dataset_to_fasta(FILE* outfile, dataset ds);
