@@ -55,11 +55,29 @@ int main(int argc, char** argv) {
 
   switch(output_dimensions) {
   case 2:
+    printf("   shift x:  %4.8f\n", map.shift[0]);
+    printf("   shift y:  %4.8f\n", map.shift[1]);
+    printf("n points x:  %5lu\n", map.n_values_per_dimension[0]);
+    printf("n points y:  %5lu\n", map.n_values_per_dimension[1]);
+    printf("unit-length: %5lu\n", map.value_size);
+    printf("factor 255/maximum(intensity): %4.8f\n", map.conversion_factor);
+    
     save_2d_density_to_png(argv[6], map);
     break;
+    
   case 3:
+    printf("   shift x:  %4.8f\n", map.shift[0]);
+    printf("   shift y:  %4.8f\n", map.shift[1]);
+    printf("   shift z:  %4.8f\n", map.shift[2]);
+    printf("n points x:  %5lu\n", map.n_values_per_dimension[0]);
+    printf("n points y:  %5lu\n", map.n_values_per_dimension[1]);
+    printf("n points z:  %5lu\n", map.n_values_per_dimension[2]);
+    printf("unit-length: %5lu\n", map.value_size);
+    printf("factor 255/maximum(intensity): %4.8f\n", map.conversion_factor);
+    
     save_3d_density_to_pngs(argv[6], map);
     break;
+    
   default:
     return(1);
   }
