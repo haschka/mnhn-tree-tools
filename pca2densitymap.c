@@ -59,7 +59,6 @@ int main(int argc, char** argv) {
     printf("   shift y:  %4.8f\n", map.shift[1]);
     printf("n points x:  %5lu\n", map.n_values_per_dimension[0]);
     printf("n points y:  %5lu\n", map.n_values_per_dimension[1]);
-    printf("unit-length: %5lu\n", map.value_size);
     printf("factor 255/maximum(intensity): %4.8f\n", map.conversion_factor);
     
     save_2d_density_to_png(argv[6], map);
@@ -72,7 +71,6 @@ int main(int argc, char** argv) {
     printf("n points x:  %5lu\n", map.n_values_per_dimension[0]);
     printf("n points y:  %5lu\n", map.n_values_per_dimension[1]);
     printf("n points z:  %5lu\n", map.n_values_per_dimension[2]);
-    printf("unit-length: %5lu\n", map.value_size);
     printf("factor 255/maximum(intensity): %4.8f\n", map.conversion_factor);
     
     save_3d_density_to_pngs(argv[6], map);
@@ -81,6 +79,7 @@ int main(int argc, char** argv) {
   default:
     return(1);
   }
+  free(lmap.intensities);
   free(map.intensities);
   return(0);
 }

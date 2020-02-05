@@ -15,3 +15,4 @@ density_map longmap_to_char_map(density_map map);
 int save_2d_density_to_png(char* filename, density_map map);
 int save_3d_density_to_pngs(char* filename, density_map map);
 
+void print_2d_density_to_file(FILE* f, density_map map);

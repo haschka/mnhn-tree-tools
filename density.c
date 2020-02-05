@@ -2,20 +2,13 @@
 #include<stdio.h>
 #include<string.h>
 #include<math.h>
+#include<unistd.h>
 
 #include<float.h>
 #include<png.h>
 
 #include"dataset.h"
-
-typedef struct {
-  void* intensities;
-  size_t n_values_per_dimension[3];
-  float shift[3];
-  float conversion_factor;
-  size_t value_size;
-  int dimensions;
-} density_map;
+#include"density.h"
 
 static inline float* get_min_max_in_dimension_from_dataset(dataset ds,
 							   int dim) {
@@ -166,6 +159,26 @@ density_map longmap_to_char_map(density_map map) {
 
   return(cmap);
 }
+
+void print_2d_density_to_file(FILE* f, density_map map) {
+  size_t i,j;
+
+  unsigned long* intensities = (unsigned long*)map.intensities;
+
+  if (map.value_size != sizeof(unsigned long)) {
+    printf("2d density print only works for \"unsigned long\" density maps");
+    _exit(1);
+  }
+
+  for(j = 0; j < map.n_values_per_dimension[1]; j++) {
+    for(i = 0; i < map.n_values_per_dimension[0]; i++) {
+
+      fprintf(f,"%lu %lu %lu\n",
+	      i,j,intensities[j*map.n_values_per_dimension[0]+i]);
+    }
+  }
+}
+
 
 int save_2d_density_to_png(char* filename, density_map map) {
 
