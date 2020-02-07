@@ -40,6 +40,7 @@ void print_arguments() {
 	 "   (float) epsilon increase between cluster search \n"
 	 "   (int) minimum numbers of clusters in epsilon neigbourhood \n"
 	 "   (string) path/andprefix of split_set_files \n"
+	 "   (int) number of threads to use \n"
 #if defined (_CLUSTER_PCA)
 	 "   (int) dimensions in projection file (PCA obtained from kmers)\n"
 	 "   [FILE] PCA projections file obtained i.e. from kers\n"	 
@@ -70,6 +71,7 @@ int main(int argc, char** argv) {
 
   float epsilon_start;
   float epsilon_inc;
+  int n_threads;
 #if defined (_CLUSTER_PCA)
   int dimensions;
 #endif
@@ -89,8 +91,9 @@ int main(int argc, char** argv) {
   sscanf(argv[3], "%f", &epsilon_inc);
   sscanf(argv[4], "%i", &minpts);
   sscanf(argv[5], "%s", split_files_prefix);
+  sscanf(argv[6], "%i", &n_threads);
 #if defined (_CLUSTER_PCA)
-  sscanf(argv[6], "%i", &dimensions);
+  sscanf(argv[7], "%i", &dimensions);
 #endif
 
 #if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
@@ -105,7 +108,7 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  if ( NULL == ( projection_f = fopen(argv[7], "r"))) file_error(argv[1]);
+  if ( NULL == ( projection_f = fopen(argv[8], "r"))) file_error(argv[1]);
   load_projections_from_file_into_dataset(projection_f,dimensions,&ds);
   fclose(projection_f);
 
@@ -136,7 +139,8 @@ int main(int argc, char** argv) {
 		   epsilon_start,
 		   epsilon_inc,
 		   minpts,
-		   split_files_prefix);
+		   split_files_prefix,
+		   n_threads);
 
 #if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
   free_sequences_from_dataset(ds);

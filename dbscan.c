@@ -33,6 +33,26 @@
 #include<xmmintrin.h>
 #endif
 
+typedef struct {
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  split_set (*dbscanner) (dataset, float, int, opencl_stuff);
+  opencl_stuff ocl;
+#else
+  split_set (*dbscanner) (dataset, float, int);
+#endif
+  dataset ds;
+  float* epsilon_now;
+  float epsilon_inc;
+  int minpts;
+  int* split_set_index;
+  pthread_mutex_t* lock_stop;
+  pthread_mutex_t* lock_eps;
+  int* stop;
+  split_set** split_sets;
+  int* stopindex;
+} thread_handler_adaptive_scan;
+  
+
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 
 char* load_program_source(const char* filename) {
@@ -808,6 +828,50 @@ dbscan_SW_GPU
   return(ret_val);
 }
 
+void* adaptive_dbscan_thread(void* arg) {
+
+  thread_handler_adaptive_scan* th = (thread_handler_adaptive_scan*)arg;
+
+  dataset ds = th->ds;
+  float epsilon;
+  int index;
+  
+  while(1) {
+
+    if(th->stop[0]) {
+      goto finish;
+    }
+    
+    pthread_mutex_lock(th->lock_eps[0]);
+    
+    epsilon = th->epsilon_now[0];
+    th->epsilon_now[0] = th->epsilon_now[0] + th->epsilon_inc;
+    index = th->split_set_index[0];
+    th->split_set_index[0]++;
+    split_sets[0] =
+      (split_sets*)realloc(split_sets[0],
+			   sizeof(split_set)*th->split_set_index[0]);
+    
+    pthread_mutex_unlock(th->lock_eps[0]);
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+    split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
+#else
+    split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts);
+#endif
+
+    if(split_sets[index].n_clusters == 1) {
+      pthread_mutex_lock(th->lock_stop[0]);
+      th->stopindex = index;
+      th->stop[0] = 1;
+      pthread_mutex_unlock(th->lock_stop[0]);
+      goto finish;
+    }
+  }
+ finish:
+  return NULL;
+}
+
 void adaptive_dbscan(
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 		     split_set (*dbscanner) (dataset,
@@ -823,11 +887,12 @@ void adaptive_dbscan(
 		     float epsilon_start,
 		     float epsilon_inc,
 		     int minpts,
-		     char* split_files_prefix
+		     char* split_files_prefix,
+		     int n_threads
 		     ) {
   
   int i,j,k;
-
+  
   int initial_counter, count, eps_count;
   
   split_set* set_of_split_sets;
@@ -843,6 +908,12 @@ void adaptive_dbscan(
   char split_files[255];
   char buffer[20];
 
+  pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t)*n_threads);
+  pthread_mutex_t* lock_eps = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_t* lock_stop =
+    (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+  int * stop = (int*)malloc(sizeof(int));
+  
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   opencl_stuff ocl = opencl_initialization(ds);
 #endif
@@ -901,6 +972,10 @@ void adaptive_dbscan(
   count = 0;
   eps_count = 1;
 
+  while(!stop[0]) {
+    
+    
+  
   do{
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
     new_split_set =

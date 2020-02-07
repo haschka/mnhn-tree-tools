@@ -41,7 +41,8 @@ void adaptive_dbscan(split_set (*dbscanner) (dataset,
 		     float epsilon_start,
 		     float epsilon_inc,
 		     int minpts,
-		     char* split_files_prefix
+		     char* split_files_prefix,
+		     int n_threads
 		     );
 #else
 void adaptive_dbscan(split_set (*dbscanner) (dataset,
@@ -51,7 +52,8 @@ void adaptive_dbscan(split_set (*dbscanner) (dataset,
 		     float epsilon_start,
 		     float epsilon_inc,
 		     int minpts,
-		     char* split_files_prefix
+		     char* split_files_prefix,
+		     int n_threads
 		     );
 #endif
 void create_cluster_files(char* prefix, split_set s, dataset ds);
