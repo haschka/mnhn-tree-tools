@@ -921,7 +921,7 @@ void adaptive_dbscan(
 
   thread_handler_adaptive_scan* th =
     (thread_handler_adaptive_scan*)
-    malloc(sizeof(thread_handler_adaptive_scan));
+    malloc(sizeof(thread_handler_adaptive_scan)*n_threads);
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   if(n_threads > 1) {
@@ -986,6 +986,8 @@ void adaptive_dbscan(
   pthread_mutex_init(lock_stop,NULL);
   pthread_mutex_init(lock_eps,NULL);
 
+  stop[0] = 0;
+  
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   th[0].ocl = ocl;
 #endif
@@ -1041,7 +1043,7 @@ void adaptive_dbscan(
       }
 
       printf("  Epsilon at layer %i: %f\n", count+1,
-	     epsilon_start+eps_count*(float)epsilon_inc);
+	     epsilon_start+(i+1)*(float)epsilon_inc);
 	          
       current_connection = generate_split_set_relation(set_of_split_sets[count],
 						       new_split_set);
