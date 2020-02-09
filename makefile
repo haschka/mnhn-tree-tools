@@ -89,36 +89,39 @@ tree_map_for_sequence: tree_map_for_sequence.c dataset.h \
 cluster_dbscan_pca: cluster_dbscan_pca.c dbscan.h dataset.h cluster.h \
                     dataset.o cluster_io.o dbscan_L2.o binary_array.o
 	$(CC) $(CFLAGS) cluster_dbscan_pca.c -o ./bin/cluster_dbscan_pca \
- dataset.o cluster_io.o dbscan_L2.o binary_array.o $(MATH)
+ dataset.o cluster_io.o dbscan_L2.o binary_array.o $(MATH) $(PTHREAD)
 
 cluster_dbscan_kmerL1: cluster_dbscan_kmer.c dbscan.h dataset.h cluster.h \
                        dataset.o cluster_io.o dbscan_L1.o binary_array.o
 	$(CC) $(CFLAGS) cluster_dbscan_kmer.c -o ./bin/cluster_dbscan_kmerL1 \
- dataset.o cluster_io.o dbscan_L1.o binary_array.o -D_CLUSTER_KMER_L1 $(MATH)
+ dataset.o cluster_io.o dbscan_L1.o binary_array.o -D_CLUSTER_KMER_L1 $(MATH) \
+ $(PTHREAD)
 
 cluster_dbscan_kmerL2: cluster_dbscan_kmer.c dbscan.h dataset.h cluster.h \
                        dataset.o cluster_io.o dbscan_L2.o binary_array.o
 	$(CC) $(CFLAGS) cluster_dbscan_kmer.c -o ./bin/cluster_dbscan_kmerL2 \
- dataset.o cluster_io.o dbscan_L2.o binary_array.o -D_CLUSTER_KMER_L2 $(MATH)
+ dataset.o cluster_io.o dbscan_L2.o binary_array.o -D_CLUSTER_KMER_L2 $(MATH) \
+ $(PTHREAD)
 
 cluster_dbscan_SW: cluster_dbscan_SW.c dbscan.h dataset.h cluster.h \
                    dataset.o cluster_io.o dbscan_SW.o binary_array.o \
                    smith_waterman.o
 	$(CC) $(CFLAGS) cluster_dbscan_SW.c -o ./bin/cluster_dbscan_SW \
- dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH)
+ dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH) \
+ $(PTHREAD)
 
 cluster_dbscan_SW_GPU: cluster_dbscan_SW.c dbscan.h dataset.h cluster.h \
                        dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o
 	$(CC) $(CFLAGS) cluster_dbscan_SW.c -o ./bin/cluster_dbscan_SW_GPU \
  dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o $(MATH) $(OPENCL) \
- -D_SCAN_SMITH_WATERMAN_GPU
+ -D_SCAN_SMITH_WATERMAN_GPU $(PTHREAD)
 
 adaptive_clustering_SW: adaptive_clustering.c dbscan.h dataset.h cluster.h \
                      dataset.o cluster_io.o dbscan_SW.o binary_array.o \
                      smith_waterman.o
 	$(CC) $(CFLAGS) adaptive_clustering.c -o ./bin/adaptive_clustering_SW \
  dataset.o cluster_io.o dbscan_SW.o binary_array.o smith_waterman.o $(MATH) \
- -D_SCAN_SMITH_WATERMAN
+ -D_SCAN_SMITH_WATERMAN $(PTHREAD)
 
 adaptive_clustering_SW_GPU: adaptive_clustering.c dbscan.h dataset.h cluster.h \
 	                 dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o \
@@ -126,7 +129,7 @@ adaptive_clustering_SW_GPU: adaptive_clustering.c dbscan.h dataset.h cluster.h \
 	$(CC) $(CFLAGS) adaptive_clustering.c -o \
  ./bin/adaptive_clustering_SW_GPU \
  dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o smith_waterman.o \
- $(MATH) $(OPENCL) -D_SCAN_SMITH_WATERMAN_GPU
+ $(MATH) $(OPENCL) -D_SCAN_SMITH_WATERMAN_GPU $(PTHREAD)
 
 adaptive_clustering_PCA: adaptive_clustering.c dbscan.h dataset.h cluster.h \
 	                 dataset.o cluster_io.o dbscan_L2.o binary_array.o \
@@ -134,7 +137,7 @@ adaptive_clustering_PCA: adaptive_clustering.c dbscan.h dataset.h cluster.h \
 	$(CC) $(CFLAGS) adaptive_clustering.c -o \
  ./bin/adaptive_clustering_PCA \
  dataset.o cluster_io.o dbscan_L2.o binary_array.o smith_waterman.o \
- $(MATH) -D_CLUSTER_PCA
+ $(MATH) -D_CLUSTER_PCA $(PTHREAD)
 
 adaptive_clustering_kmer_L2: adaptive_clustering.c dbscan.h dataset.h cluster.h\
 	                 dataset.o cluster_io.o dbscan_L2.o binary_array.o \
@@ -142,7 +145,7 @@ adaptive_clustering_kmer_L2: adaptive_clustering.c dbscan.h dataset.h cluster.h\
 	$(CC) $(CFLAGS) adaptive_clustering.c -o \
  ./bin/adaptive_clustering_kmer_L2 \
  dataset.o cluster_io.o dbscan_L2.o binary_array.o smith_waterman.o \
- $(MATH) -D_CLUSTER_KMER_L2
+ $(MATH) -D_CLUSTER_KMER_L2 $(PTHREAD)
 
 adaptive_clustering_kmer_L1: adaptive_clustering.c dbscan.h dataset.h cluster.h\
 	                 dataset.o cluster_io.o dbscan_L1.o binary_array.o \
@@ -150,7 +153,7 @@ adaptive_clustering_kmer_L1: adaptive_clustering.c dbscan.h dataset.h cluster.h\
 	$(CC) $(CFLAGS) adaptive_clustering.c -o \
  ./bin/adaptive_clustering_kmer_L1 \
  dataset.o cluster_io.o dbscan_L1.o binary_array.o smith_waterman.o \
- $(MATH) -D_CLUSTER_KMER_L1
+ $(MATH) -D_CLUSTER_KMER_L1 $(PTHREAD)
 
 split_set_to_fasta: split_set_to_fasta.c dataset.h cluster.h dataset.o \
                     cluster_io.o binary_array.o

@@ -2,6 +2,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<unistd.h>
+#include<pthread.h>
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 #ifdef __APPLE__
@@ -842,29 +843,29 @@ void* adaptive_dbscan_thread(void* arg) {
       goto finish;
     }
     
-    pthread_mutex_lock(th->lock_eps[0]);
+    pthread_mutex_lock(th->lock_eps);
     
     epsilon = th->epsilon_now[0];
     th->epsilon_now[0] = th->epsilon_now[0] + th->epsilon_inc;
     index = th->split_set_index[0];
     th->split_set_index[0]++;
-    split_sets[0] =
-      (split_sets*)realloc(split_sets[0],
+    th->split_sets[0] =
+      (split_set*)realloc(th->split_sets[0],
 			   sizeof(split_set)*th->split_set_index[0]);
     
-    pthread_mutex_unlock(th->lock_eps[0]);
+    pthread_mutex_unlock(th->lock_eps);
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
-    split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
+    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
 #else
-    split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts);
+    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts);
 #endif
 
-    if(split_sets[index].n_clusters == 1) {
-      pthread_mutex_lock(th->lock_stop[0]);
-      th->stopindex = index;
+    if(th->split_sets[0][index].n_clusters == 1) {
+      pthread_mutex_lock(th->lock_stop);
+      th->stopindex[0] = index;
       th->stop[0] = 1;
-      pthread_mutex_unlock(th->lock_stop[0]);
+      pthread_mutex_unlock(th->lock_stop);
       goto finish;
     }
   }
@@ -918,6 +919,17 @@ void adaptive_dbscan(
   opencl_stuff ocl = opencl_initialization(ds);
 #endif
 
+  thread_handler_adaptive_scan* th =
+    (thread_handler_adaptive_scan*)
+    malloc(sizeof(thread_handler_adaptive_scan));
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+  if(n_threads > 1) {
+    printf("Adaptive Clustering on GPU currently only supports 1 thread\n");
+    _exit(1);
+  }
+#endif
+  
   printf("Performing adaptive clustering with parameters: \n"
 	 "minpts: %i\n"
 	 "epsilon_start: %f\n"
@@ -969,20 +981,52 @@ void adaptive_dbscan(
     _exit(1);
   }
 
-  count = 0;
   eps_count = 1;
 
-  while(!stop[0]) {
-    
-    
-  
-  do{
+  pthread_mutex_init(lock_stop,NULL);
+  pthread_mutex_init(lock_eps,NULL);
+
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
-    new_split_set =
-      dbscanner(ds,epsilon_start+eps_count*epsilon_inc, minpts, ocl);
-#else
-    new_split_set = dbscanner(ds, epsilon_start+eps_count*epsilon_inc, minpts);
+  th[0].ocl = ocl;
 #endif
+  th[0].dbscanner = dbscanner;
+  th[0].ds = ds;
+  th[0].epsilon_now = (float*)malloc(sizeof(float));
+  th[0].epsilon_now[0] = epsilon_start+epsilon_inc;
+  th[0].epsilon_inc = epsilon_inc;
+  th[0].minpts = minpts;
+  th[0].split_set_index = (int*)malloc(sizeof(int));
+  th[0].split_set_index[0] = 1;
+  th[0].lock_stop = lock_stop;
+  th[0].lock_eps = lock_eps;
+  th[0].stop = stop;
+  th[0].split_sets = (split_set**)malloc(sizeof(split_set*));
+  th[0].split_sets[0] = (split_set*)malloc(sizeof(split_set));
+  memcpy(th[0].split_sets[0],set_of_split_sets,sizeof(split_set));
+					    
+  th[0].stopindex = (int*)malloc(sizeof(int));
+  th[0].stopindex[0];
+
+  for(i=1;i<n_threads;i++) {
+    memcpy(th+i,th,sizeof(thread_handler_adaptive_scan));
+  }
+  
+  for(i=0;i<n_threads;i++) {
+    pthread_create(threads+i, NULL,adaptive_dbscan_thread,th+i);
+  }
+  
+  for(i=0;i<n_threads;i++) {
+    pthread_join(threads[i],NULL);
+  }
+
+  pthread_mutex_destroy(lock_stop);
+  pthread_mutex_destroy(lock_eps);
+
+  count = 0;
+  
+  for(i=1;i<=th->stopindex[0];i++) {
+    
+    new_split_set = th->split_sets[0][i];
     if (new_split_set.n_clusters < set_of_split_sets[count].n_clusters) {
       
       not_covered = data_not_in_clusters(new_split_set, ds);
@@ -1011,11 +1055,8 @@ void adaptive_dbscan(
       
       set_of_split_sets[count] = new_split_set;
       connections[count-1] = current_connection;
-    } else {
-      free_split_set_and_associated_clusters(new_split_set);
     }
-    eps_count++;
-  }while(new_split_set.n_clusters != 1);
+  };
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   opencl_destroy(ocl);
