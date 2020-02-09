@@ -64,6 +64,32 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
   
   return(nodes[n_layers-1]);
 }
+
+split_set filtered_split_set_by_min_size(split_set s_in, int min_size) {
+
+  int i, count, current_n_members;
+  
+  split_set s_out;
+
+  s_out.clusters = (cluster*)malloc(sizeof(cluster)*s_in.n_clusters);
+  
+  count = 0;
+  for(i=0;s_in.n_clusters;i++) {
+    current_n_members = s_in.clusters[i].n_members;
+    if ( current_n_members >= min_size) {
+      s_out.clusters[count].n_members =
+	(int*)malloc(sizeof(int)*current_n_members);
+      memcpy(s_out.clusters[count].members,
+	     s_in.clusters[i].members,
+	     sizeof(int)*current_n_members);
+      count++;
+    }
+  }
+  s_out.n_clusters = count;
+  s_out.clusters = (cluster*)realloc(s_out.clusters,sizeof(cluster)*count);
+  return(s_out);
+}
+   
 	  
 void print_tree(FILE*f, tree_node* root)
 {

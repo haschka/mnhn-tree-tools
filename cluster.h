@@ -145,6 +145,8 @@ void store_split_set(char* filename, split_set s);
  */
 split_set read_split_set(char* filename);
 
+split_set filtered_split_set_by_min_size(split_set s_in, int min_size);
+
 void print_cluster_matrix_view_annotation(FILE* f, dataset ds);
 void print_cluster_matrix_view(FILE*f, split_set s, dataset ds);
 
