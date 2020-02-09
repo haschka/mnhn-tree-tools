@@ -74,7 +74,7 @@ split_set filtered_split_set_by_min_size(split_set s_in, int min_size) {
   s_out.clusters = (cluster*)malloc(sizeof(cluster)*s_in.n_clusters);
   
   count = 0;
-  for(i=0;s_in.n_clusters;i++) {
+  for(i=0;i<s_in.n_clusters;i++) {
     current_n_members = s_in.clusters[i].n_members;
     if ( current_n_members >= min_size) {
       s_out.clusters[count].members =
