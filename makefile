@@ -17,7 +17,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      split_set_to_matrix_line split_set_to_matrix_annotation \
      split_sets_to_newick virtual_evolution simulation_verification \
      find_sequence_in_split_sets tree_map_for_sequence \
-     pca2densitymap pca2densityfile
+     pca2densitymap pca2densityfile reverse_with_mask
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -50,6 +50,11 @@ fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 kmer2pca: kmer2pca.c 
 	$(CC) $(CFLAGS) kmer2pca.c -o ./bin/kmer2pca -mavx $(PTHREAD) $(MATH) \
  $(LAPACK)
+
+reverse_with_mask: reverse_with_mask.c dataset.h binary_array.h dataset.o \
+                   binary_array.o
+	$(CC) $(CFLAGS) reverse_with_mask.c -o ./bin/reverse_with_mask \
+ dataset.o binary_array.o $(MATH)
 
 pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
                 binary_array.o density.o 

@@ -108,7 +108,22 @@ void dataset_to_fasta(FILE* f, dataset ds) {
     fprintf(f, "\n");
   }
 }
+
+void reverse_sequences(dataset* ds, char* binary_mask) {
+  int i,j;
+
+  char* buffer = (char*)malloc(sizeof(char)*ds->max_sequence_length);
   
+  for (i = 0 ; i<ds->n_values; i++) {
+    if (get_value_in_binary_array_at_index(binary_mask,i)) {
+      memcpy(buffer, ds->sequences[i], ds->sequence_lengths[i]);
+      for (j = 0 ; j<ds->sequence_lengths[i]; j++) {
+	ds->sequences[i][j] = buffer[ds->sequence_lengths[i]-1-j];
+      }
+    }
+  }
+  free(buffer);
+}
 
 void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us) {
 

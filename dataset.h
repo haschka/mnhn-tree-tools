@@ -169,3 +169,5 @@ void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
  *  \param ds the dataset to be written to the file 
  */
 void dataset_to_fasta(FILE* outfile, dataset ds);
+
+void reverse_sequences(dataset *ds, char* binary_mask);
