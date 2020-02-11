@@ -4,12 +4,16 @@
 #include<ctype.h>
 #include<unistd.h>
 
-#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
 #ifdef __APPLE__
 #include<OpenCL/OpenCL.h>
 #else
 #include<CL/opencl.h>
 #endif
+#endif
+
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+#include<mpi.h>
 #endif
 
 #if defined(_CLUSTER_KMER_L1) || defined(_CLUSTER_KMER_L2)
@@ -56,7 +60,8 @@ int main(int argc, char** argv) {
   float epsilon;
   int minpts;
   
-#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
+#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN) ||\
+  defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
   FILE* fasta_f;
 #elif defined (_CLUSTER_PCA)
   FILE* fasta_f;
@@ -67,6 +72,11 @@ int main(int argc, char** argv) {
   data_shape shape;
 #endif
 
+#if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+  int mpi_rank;
+  int mpi_kill_switch = -1;
+#endif
+  
   char split_files_prefix[255];
 
   float epsilon_start;
@@ -96,7 +106,8 @@ int main(int argc, char** argv) {
   sscanf(argv[7], "%i", &dimensions);
 #endif
 
-#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
+#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)\
+  || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
 
   if ( NULL == (fasta_f = fopen(argv[1], "r"))) file_error(argv[1]);
   ds = dataset_from_fasta(fasta_f);
@@ -121,10 +132,19 @@ int main(int argc, char** argv) {
   ds = load_kmer_from_file_into_dataset(kmer_f, shape);
   fclose(kmer_f);
 
-#endif
+#endif  
 
   printf("Dataset read!\n");
 
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
+  MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
+  if(mpi_rank != 0) {
+    adaptive_dbscan_mpi_client(ds, mpi_rank, mpi_size);
+    goto finish:
+  }
+#endif
+  
   adaptive_dbscan(
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
 		   dbscan_SW_GPU,
@@ -142,7 +162,15 @@ int main(int argc, char** argv) {
 		   split_files_prefix,
 		   n_threads);
 
-#if defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN)
+ finish:
+#if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+  if(mpi_rank == 0) {
+    for(i=1;i<mpi_size;i++) {
+      MPI_Send(&mpi_kill_switch,1,MPI_INT,i,0,MPI_COMM_WORLD);
+    }
+  }
+#elif defined (_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN) ||\
+  defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
   free_sequences_from_dataset(ds);
 #elif defined (_CLUSTER_PCA)
   free_dataset(ds);
