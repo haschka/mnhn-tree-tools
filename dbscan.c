@@ -290,6 +290,8 @@ int adaptive_dbscan_mpi_client(dataset ds,
 			       int mpi_size,
 			       int mpi_rank) {
 
+  int i;
+  
   opencl_stuff ocl = opencl_initialization(mpi_stride, mpi_stride_rest,ds);
 
   cl_int err;
