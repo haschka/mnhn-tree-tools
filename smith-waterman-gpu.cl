@@ -68,9 +68,9 @@ __kernel void gpuwaterman(__global char* sequences,
       comp[0] = matrix[(i-1)]+substitute(A[i],B[j]);
       comp[1] = matrix[rank_a+(i-1)]-GAP;
       comp[2] = matrix[i]-GAP;
-      printf("1: %i\n",matrix[i-1]);
-      printf("2: %i\n",matrix[rank_a]);
-      printf("3: %i\n",comp[2]);
+      //      printf("1: %i\n",matrix[i-1]);
+      // printf("2: %i\n",matrix[rank_a]);
+      //printf("3: %i\n",comp[2]);
 
       
       max = 0;
