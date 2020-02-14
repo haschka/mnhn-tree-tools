@@ -452,7 +452,7 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
       }
     }
   }
-  
+  free(mpi_comm_buffer);
   return(nb);
 }     
 
