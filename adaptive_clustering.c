@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
 
 #if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
   int mpi_rank;
+  int mpi_size;
   int mpi_kill_switch = -1;
 #endif
   
@@ -137,23 +138,30 @@ int main(int argc, char** argv) {
   printf("Dataset read!\n");
 
 #if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  MPI_Init(NULL, NULL);
   MPI_Comm_rank(MPI_COMM_WORLD,&mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD,&mpi_size);
   if(mpi_rank != 0) {
     adaptive_dbscan_mpi_client(ds, mpi_rank, mpi_size);
-    goto finish:
+    goto finish;
   }
 #endif
   
   adaptive_dbscan(
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
 		   dbscan_SW_GPU,
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+		   dbscan_SW_GPU_MPI,
 #elif defined(_SCAN_SMITH_WATERMAN)
 		   dbscan_SW,
 #elif defined(_CLUSTER_PCA) || defined(_CLUSTER_KMER_L2)
 		   dbscan_L2,
 #elif defined(_CLUSTER_KMER_L1)
 		   dbscan_L1,
+#endif
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+		   mpi_rank,
+		   mpi_size,
 #endif
 		   ds,
 		   epsilon_start,
@@ -176,6 +184,9 @@ int main(int argc, char** argv) {
   free_dataset(ds);
 #elif defined (_CLUSTER_KMER_L1) || defined(_CLUSTER_KMER_L2)
   free_values_from_dataset(ds);
+#endif
+#if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+  MPI_Finalize();
 #endif
 }
   

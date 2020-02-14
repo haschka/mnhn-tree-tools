@@ -1,4 +1,5 @@
 CC=gcc
+MPICC=mpicc
 #CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
 CFLAGS=-g -O2 -march=native -ftree-vectorize
@@ -7,18 +8,21 @@ MATH=-lm
 PTHREAD=-pthread
 OPENCL=-lOpenCL
 PNG=-lpng
+MPI=-lmpi
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
      compareSW silhouette consens sequence_multiplicity adaptive_clustering_SW \
      adaptive_clustering_SW_GPU adaptive_clustering_PCA \
      adaptive_clustering_kmer_L1 adaptive_clustering_kmer_L2 \
+     adaptive_clustering_SW_MPI_GPU \
      split_set_to_fasta print_connections \
      split_set_to_matrix_line split_set_to_matrix_annotation \
      split_sets_to_newick virtual_evolution simulation_verification \
      find_sequence_in_split_sets tree_map_for_sequence \
      pca2densitymap pca2densityfile reverse_with_mask \
-     find_closest_sequence_SW
+     find_closest_sequence_SW \
+
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -33,6 +37,9 @@ dbscan_SW.o: dbscan.c dbscan.h cluster.h binary_array.h
 dbscan_SW_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_GPU \
  -o dbscan_SW_GPU.o
+dbscan_SW_MPI_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
+	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_MPI_GPU \
+ -o dbscan_SW_MPI_GPU.o
 dbscan_L1.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L1 -o dbscan_L1.o
 dbscan_L2.o: dbscan.c dbscan.h cluster.h binary_array.h
@@ -142,6 +149,14 @@ adaptive_clustering_SW_GPU: adaptive_clustering.c dbscan.h dataset.h cluster.h \
  ./bin/adaptive_clustering_SW_GPU \
  dataset.o cluster_io.o dbscan_SW_GPU.o binary_array.o smith_waterman.o \
  $(MATH) $(OPENCL) -D_SCAN_SMITH_WATERMAN_GPU $(PTHREAD)
+
+adaptive_clustering_SW_MPI_GPU: adaptive_clustering.c dbscan.h dataset.h \
+                         cluster.h dataset.o cluster_io.o dbscan_SW_MPI_GPU.o \
+                         binary_array.o smith_waterman.o
+	$(MPICC) $(CFLAGS) adaptive_clustering.c -o \
+ ./bin/adaptive_clustering_SW_MPI_GPU \
+ dataset.o cluster_io.o dbscan_SW_MPI_GPU.o binary_array.o smith_waterman.o \
+ $(MATH) $(OPENCL) $(MPI) -D_SCAN_SMITH_WATERMAN_MPI_GPU $(PTHREAD)
 
 adaptive_clustering_PCA: adaptive_clustering.c dbscan.h dataset.h cluster.h \
 	                 dataset.o cluster_io.o dbscan_L2.o binary_array.o \

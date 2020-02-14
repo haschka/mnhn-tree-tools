@@ -7,7 +7,7 @@ typedef struct {
   int n_members; /*!< number of features in this neighborhood */
 } neighbors;
 
-#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
 typedef struct {
   cl_device_id* devices;
   cl_platform_id* platform;
@@ -28,9 +28,11 @@ typedef struct {
 split_set dbscan_L1(dataset ds, float epsilon, int minpts);
 split_set dbscan_L2(dataset ds, float epsilon, int minpts);
 split_set dbscan_SW(dataset ds, float epsilon, int minpts);
+#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+void opencl_destroy(opencl_stuff ocl);
+#endif
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
 opencl_stuff opencl_initialization(dataset ds);
-void opencl_destroy(opencl_stuff ocl);
 split_set dbscan_SW_GPU(dataset ds, float epsilon, int minpts,
 			opencl_stuff ocl);
 void adaptive_dbscan(split_set (*dbscanner) (dataset,
@@ -44,6 +46,28 @@ void adaptive_dbscan(split_set (*dbscanner) (dataset,
 		     char* split_files_prefix,
 		     int n_threads
 		     );
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+opencl_stuff opencl_initialization(int mpi_stride, dataset ds);
+split_set dbscan_SW_GPU_MPI(dataset ds, float epsilon, int minpts,
+			    opencl_stuff ocl, int mpi_rank, int mpi_size);
+void adaptive_dbscan(split_set (*dbscanner) (dataset,
+					     float,
+					     int,
+					     opencl_stuff,
+					     int,
+					     int),
+		     int mpi_rank,
+		     int mpi_size,
+		     dataset ds,
+		     float epsilon_start,
+		     float epsilon_inc,
+		     int minpts,
+		     char* split_files_prefix,
+		     int n_threads
+		     );
+int adaptive_dbscan_mpi_client(dataset ds,
+			       int mpi_rank,
+			       int mpi_size);
 #else
 void adaptive_dbscan(split_set (*dbscanner) (dataset,
 					     float,

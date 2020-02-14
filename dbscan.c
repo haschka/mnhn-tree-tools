@@ -42,6 +42,11 @@ typedef struct {
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   split_set (*dbscanner) (dataset, float, int, opencl_stuff);
   opencl_stuff ocl;
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  split_set (*dbscanner) (dataset, float, int, opencl_stuff, int, int);
+  opencl_stuff ocl;
+  int mpi_rank;
+  int mpi_size;
 #else
   split_set (*dbscanner) (dataset, float, int);
 #endif
@@ -80,10 +85,10 @@ char* load_program_source(const char* filename) {
 
 opencl_stuff opencl_initialization(
 #if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
-				   int mpi_stride, int mpi_stride_rest,
-#else
-				   dataset ds) {
+				   int mpi_stride,
 #endif
+				   dataset ds) {
+
   int i;
   
   opencl_stuff ocl;
@@ -159,8 +164,12 @@ opencl_stuff opencl_initialization(
   ocl.acc_sequence_lengths = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
   ocl.acc_distances = (cl_mem*)malloc(sizeof(cl_mem)*num_devs);
 
+#if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+  ocl.local_distances = (int*)malloc(sizeof(int)*mpi_stride);
+#else
   ocl.local_distances = (int*)malloc(sizeof(int)*ds.n_values);
-
+#endif
+  
   contprop = (cl_context_properties*)malloc(sizeof(cl_context_properties)*3);
   
   contprop[0] = CL_CONTEXT_PLATFORM;
@@ -287,13 +296,11 @@ static inline int compare(const void* a , const void* b) {
 
 #if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
 int adaptive_dbscan_mpi_client(dataset ds,
-			       int mpi_size,
-			       int mpi_rank) {
+			       int mpi_rank,
+			       int mpi_size) {
 
   int i;
   
-  opencl_stuff ocl = opencl_initialization(mpi_stride, mpi_stride_rest,ds);
-
   cl_int err;
 
   size_t mpi_stride = ds.n_values / mpi_size;
@@ -302,19 +309,24 @@ int adaptive_dbscan_mpi_client(dataset ds,
   size_t acc_distance_size;
   size_t mpi_offset = mpi_stride_rest+mpi_rank*mpi_stride;
 
+  opencl_stuff ocl = opencl_initialization(mpi_stride,ds);
+  
   size_t pointer_offset; 
   
   int current_point;
 
-  ocl = opencl_initialization(mpi_stride, mpi_stride_rest,ds);
-
- mpi_client_loop:
+  size_t recovery_offset;
   
+ mpi_client_loop:
+
+  //  printf("Client %i",mpi_rank);
   MPI_Recv(&current_point,1,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   pointer_offset = mpi_offset;
   if (current_point == -1) {
       goto finish;
   }
+
+  recovery_offset = 0;
   
   for(i=0;i<ocl.num_devs;i++) {
     
@@ -337,17 +349,21 @@ int adaptive_dbscan_mpi_client(dataset ds,
     err = clEnqueueReadBuffer(ocl.cmdq[i], ocl.acc_distances[i],
 			      CL_FALSE, 0,
 			      acc_distance_size*sizeof(int),
-			      ocl.local_distances+pointer_offset,
+			      ocl.local_distances+recovery_offset,
 			      0,NULL,NULL);
 
+    recovery_offset+=acc_distance_size;
     pointer_offset+=acc_distance_size;
   }
 
   for(i=0;i<ocl.num_devs;i++) {
     clFinish(ocl.cmdq[i]);
   }
+  for(i=0;i<mpi_stride;i++) {
+    //  printf("r d %i \n",ocl.local_distances[i]);
+  }
+  printf("\n");
   
-
   MPI_Send(ocl.local_distances,
 	   mpi_stride,
 	   MPI_INT,
@@ -378,8 +394,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
   int* mpi_comm_buffer=(int*)malloc(sizeof(int)*mpi_stride);
   
   int pointer_offset = 0;
-
-  neighbors nb;
 
   size_t acc_distance_size;
   
@@ -424,14 +438,17 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
 
   nb.n_members = 0;
   for(i=0;i<mpi_stride;i++) {
-     if(ocl.local_distances[i] <= epsilon) {
+    if(ocl.local_distances[i] <= epsilon) {
       nb.members[nb.n_members++] = i;
     }
   }
 
+
   mpi_stride -= mpi_stride_rest;
   for(j=1;j<mpi_size;j++) {
-    MPI_Recv(&mpi_comm_buffer,1,MPI_INT,j,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    
+    MPI_Recv(mpi_comm_buffer,mpi_stride,
+	     MPI_INT,j,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
     for(i=0;i<mpi_stride;i++) {
       if(mpi_comm_buffer[i] <= epsilon) {
 	nb.members[nb.n_members++] =
@@ -439,6 +456,7 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
       }
     }
   }
+  
   return(nb);
 }     
 
@@ -525,7 +543,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
     distance = (float)score(ds.sequences[i],ds.sequences[point],
 			    ds.sequence_lengths[i],ds.sequence_lengths[point],
 			    work);
-
     if(distance <= epsilon) {
       nb.members[nb.n_members]=i;
       nb.n_members++;
@@ -534,6 +551,11 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
 
   /*  nb.members = (int*)realloc((void*)nb.members,sizeof(int)*nb.n_members); */
   free(work);
+  for(i=0;i<nb.n_members;i++) {
+    printf("member %i, %i \n",i,nb.members[i]);
+  }
+  printf("\n");
+
   return(nb);
 }
 
@@ -764,8 +786,13 @@ static inline void expand_cluster(int point,
 				  int minpts,
 				  char* visited,
 				  int* cluster_member,
-#if defined (_SCAN_SMITH_WATERMAN_GPU)
-				  dataset ds, opencl_stuff ocl
+#if defined (_SCAN_SMITH_WATERMAN_GPU) 
+				  dataset ds,
+				  opencl_stuff ocl
+#elif defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+				  int mpi_rank, int mpi_size,
+				  dataset ds,
+				  opencl_stuff ocl
 #else				  
 				  dataset ds
 #endif
@@ -812,7 +839,7 @@ static inline void expand_cluster(int point,
       nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds, ocl);
 #elif defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
       nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds, ocl,
-			      mpi_size, mpi_rank);
+			      mpi_rank, mpi_size);
 #else
       nb_of_nb = region_query(nb_unsorted.members[i], epsilon, ds);
 #endif
@@ -976,14 +1003,20 @@ dbscan_SW_GPU_MPI
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
       nb = region_query(i, epsilon, ds, ocl);
 #elif defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
-      nb = region_query(i, epsilon, ds, ocl, mpi_size, mpi_rank);
+      nb = region_query(i, epsilon, ds, ocl, mpi_rank, mpi_size);
 #else
       nb = region_query(i, epsilon, ds);
 #endif
       if ( minpts < nb.n_members ) {
 #if defined (_SCAN_SMITH_WATERMAN_GPU)
 		expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
-			       visited,cluster_member,ds, ocl);
+			       visited,cluster_member,ds,
+			       ocl);
+#elif defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+		expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
+			       visited,cluster_member,mpi_rank,mpi_size,ds, 
+			       ocl);
+
 #else
 		expand_cluster(i,nb,clusters+(n_clusters),epsilon,minpts,
 			       visited,cluster_member,ds);
@@ -1040,6 +1073,9 @@ void* adaptive_dbscan_thread(void* arg) {
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
     th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl,
+					     th->mpi_rank, th->mpi_size);
 #else
     th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts);
 #endif
@@ -1057,15 +1093,26 @@ void* adaptive_dbscan_thread(void* arg) {
 }
 
 void adaptive_dbscan(
-#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+#if defined(_SCAN_SMITH_WATERMAN_GPU) 
 		     split_set (*dbscanner) (dataset,
 					     float,
 					     int,
 					     opencl_stuff),
+#elif  defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+		     split_set (*dbscanner) (dataset,
+					     float,
+					     int,
+					     opencl_stuff,
+					     int,
+					     int),
 #else
 		     split_set (*dbscanner) (dataset,
 					     float,
 					     int),
+#endif
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+		     int mpi_rank,
+		     int mpi_size,
 #endif
 		     dataset ds,
 		     float epsilon_start,
@@ -1097,9 +1144,14 @@ void adaptive_dbscan(
   pthread_mutex_t* lock_stop =
     (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   int * stop = (int*)malloc(sizeof(int));
-  
-#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+
+
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
   opencl_stuff ocl = opencl_initialization(ds);
+#elif  defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  size_t mpi_stride = ds.n_values / mpi_size + ds.n_values % mpi_size;
+
+  opencl_stuff ocl = opencl_initialization(mpi_stride,ds);
 #endif
 
   thread_handler_adaptive_scan* th =
@@ -1122,6 +1174,9 @@ void adaptive_dbscan(
 
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl);
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl,
+				   mpi_rank, mpi_size);
 #else
   set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts);
 #endif
@@ -1142,6 +1197,9 @@ void adaptive_dbscan(
     free_split_set_and_associated_clusters(set_of_split_sets[0]);
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
     set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl);
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+    set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts, ocl,
+				     mpi_rank, mpi_size);
 #else
     set_of_split_sets[0] = dbscanner(ds, epsilon_start, minpts);
 #endif
@@ -1171,8 +1229,12 @@ void adaptive_dbscan(
 
   stop[0] = 0;
   
-#if defined(_SCAN_SMITH_WATERMAN_GPU)
+#if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
   th[0].ocl = ocl;
+#endif
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  th[0].mpi_rank = mpi_rank;
+  th[0].mpi_size = mpi_size;
 #endif
   th[0].dbscanner = dbscanner;
   th[0].ds = ds;
