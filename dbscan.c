@@ -359,10 +359,6 @@ int adaptive_dbscan_mpi_client(dataset ds,
   for(i=0;i<ocl.num_devs;i++) {
     clFinish(ocl.cmdq[i]);
   }
-  for(i=0;i<mpi_stride;i++) {
-    //  printf("r d %i \n",ocl.local_distances[i]);
-  }
-  printf("\n");
   
   MPI_Send(ocl.local_distances,
 	   mpi_stride,
@@ -551,10 +547,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds) {
 
   /*  nb.members = (int*)realloc((void*)nb.members,sizeof(int)*nb.n_members); */
   free(work);
-  for(i=0;i<nb.n_members;i++) {
-    printf("member %i, %i \n",i,nb.members[i]);
-  }
-  printf("\n");
 
   return(nb);
 }
