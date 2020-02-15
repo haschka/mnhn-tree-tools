@@ -10,12 +10,19 @@
 int main(int argc, char** argv) {
 
   int i;
-  int n_sets = argc-2;
+  int n_sets = argc-3;
   split_set *s = (split_set*)malloc(sizeof(split_set)*argc);
 
   split_set *sf;
 
   char path[256];
+  char number_in_file[10];
+
+  char filename[256];
+
+  FILE* f;
+  
+  filename[0] = 0;
   
   if(argc < 3) {
     printf("Arguments are: "
@@ -31,7 +38,7 @@ int main(int argc, char** argv) {
   for(i=3;i<argc;i++) {
     s[i-3] = read_split_set(argv[i]);
   }
-
+ 
   if(min_members) {
     sf = (split_set*)malloc(sizeof(split_set)*argc);
     for(i=0;i<n_sets;i++) {
@@ -41,8 +48,12 @@ int main(int argc, char** argv) {
     }
   }
 
-  for(i=1;i<n_sets;i++) {
-    connections[i-1] = generate_split_set_relation(s[i-1],s[i]);
+  for(i=0;i<n_sets;i++) {
+    strcat(filename,path);
+    sprintf(number_in_file,"%04d",i);
+    strcat(filename,number_in_file);
+    store_split_set(filename,s[i]);
+    filename[0] = 0;
   }
 
   root = generate_tree(n_sets, connections, s);
