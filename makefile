@@ -20,6 +20,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      split_set_to_matrix_line split_set_to_matrix_annotation \
      split_sets_to_newick virtual_evolution simulation_verification \
      find_sequence_in_split_sets tree_map_for_sequence \
+     filter_split_sets_by_min \
      pca2densitymap pca2densityfile reverse_with_mask \
      find_closest_sequence_SW \
 
@@ -191,6 +192,12 @@ split_sets_to_newick: split_sets_to_newick.c dataset.h cluster.h dataset.o \
                     cluster_io.o binary_array.o
 	$(CC) $(CFLAGS) split_sets_to_newick.c -o ./bin/split_sets_to_newick \
  dataset.o cluster_io.o binary_array.o $(MATH)
+
+filter_split_sets_by_min: filter_split_sets_by_min.c dataset.h cluster.h \
+                          dataset.o cluster_io.o binary_array.o
+	$(CC) $(CFLAGS) filter_split_sets_by_min.c \
+ -o ./bin/filter_split_sets_by_min dataset.o cluster_io.o binary_array.o \
+ $(MATH)
 
 split_set_to_matrix_line: split_set_to_matrix_line.c dataset.h cluster.h \
                           dataset.o cluster_io.o binary_array.o

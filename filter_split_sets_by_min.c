@@ -3,6 +3,7 @@
 #include<sys/types.h>
 #include<sys/stat.h>
 #include<fcntl.h>
+#include<string.h>
 
 #include"dataset.h"
 #include"cluster.h"
@@ -11,6 +12,7 @@ int main(int argc, char** argv) {
 
   int i;
   int n_sets = argc-3;
+  int min_members;
   split_set *s = (split_set*)malloc(sizeof(split_set)*argc);
 
   split_set *sf;
@@ -33,7 +35,7 @@ int main(int argc, char** argv) {
   }
 
   sscanf(argv[1], "%i", &min_members);
-  sscanf(argv[2], "%s", &path);
+  sscanf(argv[2], "%s", path);
   
   for(i=3;i<argc;i++) {
     s[i-3] = read_split_set(argv[i]);
@@ -54,8 +56,7 @@ int main(int argc, char** argv) {
     strcat(filename,number_in_file);
     store_split_set(filename,s[i]);
     filename[0] = 0;
+    free_split_set_and_associated_clusters(s[i]);
   }
 
-  root = generate_tree(n_sets, connections, s);
-  print_tree(stdout, root);
 }
