@@ -16,6 +16,7 @@
 
 #if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
 #include<mpi.h>
+#include<signal.h>
 #endif
 
 #if defined(_SCAN_L1)
@@ -38,6 +39,15 @@
 #include<xmmintrin.h>
 #endif
 
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+typedef struct {
+  int* split_set_index;
+  split_set** split_sets;
+} kill_handler;
+
+kill_handler kh;
+#endif
+  
 typedef struct {
 #if defined(_SCAN_SMITH_WATERMAN_GPU)
   split_set (*dbscanner) (dataset, float, int, opencl_stuff);
@@ -1037,6 +1047,18 @@ dbscan_SW_GPU_MPI
   return(ret_val);
 }
 
+#if defined (_SCAN_SMITH_WATERMAN_MPI_GPU)
+void adaptive_got_killed(int whatever) {
+  int i;
+  char buffer[256];
+  for(i=0;i<kh.split_set_index[0]-1;i++) {
+    sprintf(buffer,"split-set-from-killed-%04i",i);
+    store_split_set(buffer,kh.split_sets[0][i]);
+  }
+  _exit(1);
+}
+#endif
+
 void* adaptive_dbscan_thread(void* arg) {
 
   thread_handler_adaptive_scan* th = (thread_handler_adaptive_scan*)arg;
@@ -1241,6 +1263,12 @@ void adaptive_dbscan(
   th[0].stop = stop;
   th[0].split_sets = (split_set**)malloc(sizeof(split_set*));
   th[0].split_sets[0] = (split_set*)malloc(sizeof(split_set));
+#if defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+  kh.split_set_index = th[0].split_set_index;
+  kh.split_sets = th[0].split_sets;
+  signal(SIGINT,adaptive_got_killed);
+  signal(SIGTERM,adaptive_got_killed);
+#endif
   memcpy(th[0].split_sets[0],set_of_split_sets,sizeof(split_set));
 					    
   th[0].stopindex = (int*)malloc(sizeof(int));
