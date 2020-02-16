@@ -1,14 +1,15 @@
 CC=gcc
 MPICC=mpicc
-#CFLAGS=-g -fsanitize=address
+CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-CFLAGS=-g -O2 -march=native -ftree-vectorize
+#CFLAGS=-g -O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
 OPENCL=-lOpenCL
 PNG=-lpng
 MPI=-lmpi
+SDL=$(shell sdl2-config --cflags) $(shell sdl2-config --libs)
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
@@ -22,8 +23,8 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      find_sequence_in_split_sets tree_map_for_sequence \
      filter_split_sets_by_min \
      pca2densitymap pca2densityfile reverse_with_mask \
-     find_closest_sequence_SW \
-
+     find_closest_sequence_SW split_set_from_annotation \
+     pca_visual_extract
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -39,7 +40,7 @@ dbscan_SW_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_GPU \
  -o dbscan_SW_GPU.o
 dbscan_SW_MPI_GPU.o: dbscan.c dbscan.h cluster.h binary_array.h
-	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_MPI_GPU \
+	$(MPICC) $(CFLAGS) -c dbscan.c -D_SCAN_SMITH_WATERMAN_MPI_GPU \
  -o dbscan_SW_MPI_GPU.o
 dbscan_L1.o: dbscan.c dbscan.h cluster.h binary_array.h
 	$(CC) $(CFLAGS) -c dbscan.c -D_SCAN_L1 -o dbscan_L1.o
@@ -71,9 +72,14 @@ pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
  dataset.o binary_array.o density.o $(PNG) $(MATH)
 
 pca2densityfile: pca2densityfile.c dataset.h binary_array.h density.h dataset.o\
-                binary_array.o density.o 
+                binary_array.o density.o cluster.h cluster_io.o
 	$(CC) $(CFLAGS) pca2densityfile.c -o ./bin/pca2densityfile \
- dataset.o binary_array.o density.o $(PNG) $(MATH)
+ dataset.o binary_array.o density.o cluster_io.o $(PNG) $(MATH)
+
+pca_visual_extract: pca_visual_extract.c dataset.h binary_array.h density.h \
+                    cluster.h dataset.o binary_array.o density.o cluster_io.o
+	$(CC) $(CFLAGS) pca_visual_extract.c -o ./bin/pca_visual_extract \
+ dataset.o binary_array.o density.o cluster_io.o $(SDL) $(PNG) $(MATH)
 
 virtual_evolution: virtual_evolution.c dataset.h binary_array.h \
                    dataset.o binary_array.o
@@ -84,6 +90,13 @@ simulation_verification: simulation_verification.c dataset.h binary_array.h \
                          cluster.h dataset.o binary_array.o cluster_io.o
 	$(CC) $(CFLAGS) simulation_verification.c \
  -o ./bin/simulation_verification dataset.o binary_array.o cluster_io.o $(MATH)
+
+split_set_from_annotation: split_set_from_annotation.c dataset.h \
+                           binary_array.h cluster.h dataset.o binary_array.o \
+                           cluster_io.o
+	$(CC) $(CFLAGS) split_set_from_annotation.c \
+ -o ./bin/split_set_from_annotation dataset.o binary_array.o cluster_io.o \
+ $(MATH)
 
 find_sequence_in_split_sets: find_sequence_in_split_sets.c dataset.h \
                              binary_array.h cluster.h dataset.o binary_array.o \

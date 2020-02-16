@@ -10,8 +10,8 @@
 #include"dataset.h"
 #include"density.h"
 
-static inline float* get_min_max_in_dimension_from_dataset(dataset ds,
-							   int dim) {
+float* get_min_max_in_dimension_from_dataset(dataset ds,
+					     int dim) {
   int i;
 
   float min = FLT_MAX;
