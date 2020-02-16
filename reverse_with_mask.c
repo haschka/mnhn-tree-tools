@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
     printf(" [file] mask - file containing\n"
 	   "               \"1\"s for sequences to be inverted\n"
 	   "               \"2\"s for sequences to be conserved\n");
+    return(1);
   }
   
   if ( NULL == (fasta_f = fopen(argv[1], "r"))) file_error(argv[1]);
@@ -42,7 +43,10 @@ int main(int argc, char** argv) {
   binary_mask = alloc_and_set_zero_binary_array((size_t)ds.n_values);
   
   for(i = 0; i < ds.n_values; i++) {
-    fscanf(mask_f,"%i",&i_buffer);
+    if (1 != fscanf(mask_f,"%i",&i_buffer)) {
+      printf("Mask file currupt!\n");
+      return(1);
+    }
     if(mask_f) {
       set_value_in_binary_array_at_index(binary_mask,i);
     }

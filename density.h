@@ -12,6 +12,8 @@ density_map generate_density_map_from_dataset(dataset ds, int dim,
 
 density_map longmap_to_char_map(density_map map);
 
+float* get_min_max_in_dimension_from_dataset(dataset ds,int dim);
+
 int save_2d_density_to_png(char* filename, density_map map);
 int save_3d_density_to_pngs(char* filename, density_map map);
 
