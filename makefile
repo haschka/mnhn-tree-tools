@@ -70,7 +70,7 @@ reverse_with_mask: reverse_with_mask.c dataset.h binary_array.h dataset.o \
 
 digest_XbaI: digest_XbaI.c restriction_digest.h restriction_digest.o \
              dataset.h dataset.o binary_array.h binary_array.o
-        $(CC) $(CFLAGS) digest_XbaI.c -o ./bin/digest_XbaI \
+	$(CC) $(CFLAGS) digest_XbaI.c -o ./bin/digest_XbaI \
  dataset.o binary_array.o restriction_digest.o $(MATH)
 
 pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
