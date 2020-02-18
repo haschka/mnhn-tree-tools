@@ -25,7 +25,6 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  printf("read in dataset\n");
 #if defined(_digest_XbaI)  
   result = digest_XbaI(ds.sequences[0],ds.sequence_lengths[0],n_threads);
 #elif defined(_digest_XmnI)

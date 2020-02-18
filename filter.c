@@ -34,7 +34,7 @@ dataset filter_ds_by_size(dataset in_set, size_t size,
 	(char*)malloc(sizeof(char)*in_set.sequence_lengths[i]+1);
       memcpy(out_set.sequences[counter],in_set.sequences[i],
 	     sizeof(char)*in_set.sequence_lengths[i]);
-      out_set.sequences[in_set.sequence_lengths[i]] = 0;
+      out_set.sequences[counter][in_set.sequence_lengths[i]] = 0;
 
       out_set.sequence_lengths[counter] = in_set.sequence_lengths[i];
       counter++;
@@ -54,12 +54,16 @@ void* filter_by_SW_distance_thread(void* arg) {
   thread_handle_filter_SW* th = (thread_handle_filter_SW*)arg;
 
   int i;
-
+  int current_score;
+  
   for(i = th->start; i< th->start+th->stride; i++) {
-    if(th->max_dist >= score(th->ds->sequences[i],
-			     th->target,
-			     th->ds->sequence_lengths[i],
-			     th->target_length,NULL) ) {
+
+    current_score = score(th->ds->sequences[i],
+			  th->target,
+			  th->ds->sequence_lengths[i],
+			  th->target_length,NULL);
+    
+    if(th->max_dist >= current_score ) {
       th->is_in_dataset[i] = 1;
     }
   }
@@ -97,7 +101,7 @@ dataset filter_by_SW_distance(dataset in_set,
     th[i].stride = stride;
     if(i == n_threads-1) th[i].stride+=stride_rest;
     th[i].is_in_dataset = is_in_dataset;
-      
+    th[i].max_dist = max_distance;
     pthread_create(threads+i, NULL, filter_by_SW_distance_thread, th+i);
   }
 
@@ -116,7 +120,7 @@ dataset filter_by_SW_distance(dataset in_set,
 	(char*)malloc(sizeof(char)*in_set.sequence_lengths[i]+1);
       memcpy(out_set.sequences[counter],in_set.sequences[i],
 	     sizeof(char)*in_set.sequence_lengths[i]);
-      out_set.sequences[in_set.sequence_lengths[i]] = 0;
+      out_set.sequences[counter][in_set.sequence_lengths[i]] = 0;
 
       out_set.sequence_lengths[counter] = in_set.sequence_lengths[i];
       counter++;

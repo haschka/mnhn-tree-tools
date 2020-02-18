@@ -1,8 +1,9 @@
 CC=gcc
 MPICC=mpicc
+CFLAGS=-g
 #CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-CFLAGS=-g -O2 -march=native -ftree-vectorize
+#CFLAGS=-g -O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
