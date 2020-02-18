@@ -1,8 +1,8 @@
 CC=gcc
 MPICC=mpicc
-CFLAGS=-g -fsanitize=address
+#CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-#CFLAGS=-g -O2 -march=native -ftree-vectorize
+CFLAGS=-g -O2 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
@@ -20,7 +20,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      split_set_to_fasta print_connections \
      split_set_to_matrix_line split_set_to_matrix_annotation \
      split_sets_to_newick virtual_evolution simulation_verification \
-     find_sequence_in_split_sets tree_map_for_sequence \
+     find_sequence_in_split_sets tree_map_for_sequence tree_map_for_split_set \
      filter_split_sets_by_min \
      pca2densitymap pca2densityfile reverse_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
@@ -118,6 +118,14 @@ tree_map_for_sequence: tree_map_for_sequence.c dataset.h \
 	$(CC) $(CFLAGS) tree_map_for_sequence.c \
  -o ./bin/tree_map_for_sequence dataset.o binary_array.o cluster_io.o \
  $(MATH)
+
+tree_map_for_split_set: tree_map_for_split_set.c dataset.h \
+                        binary_array.h cluster.h dataset.o binary_array.o \
+                        cluster_io.o
+	$(CC) $(CFLAGS) tree_map_for_split_set.c \
+ -o ./bin/tree_map_for_split_set dataset.o binary_array.o cluster_io.o \
+ $(MATH)
+
 
 cluster_dbscan_pca: cluster_dbscan_pca.c dbscan.h dataset.h cluster.h \
                     dataset.o cluster_io.o dbscan_L2.o binary_array.o
