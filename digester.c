@@ -30,6 +30,8 @@ int main(int argc, char** argv) {
   result = digest_XbaI(ds.sequences[0],ds.sequence_lengths[0],n_threads);
 #elif defined(_digest_XmnI)
   result = digest_XmnI(ds.sequences[0],ds.sequence_lengths[0],n_threads);
+#elif defined(_digest_HindIII)
+  result = digest_HindIII(ds.sequences[0],ds.sequence_lengths[0],n_threads);
 #endif
   dataset_to_fasta(stdout,result);
 }

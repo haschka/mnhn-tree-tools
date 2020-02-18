@@ -24,7 +24,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      filter_split_sets_by_min \
      pca2densitymap pca2densityfile reverse_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
-     pca_visual_extract digest_XbaI digest_XmnI
+     pca_visual_extract digest_XbaI digest_XmnI digest_HindIII
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -58,7 +58,9 @@ restriction_digest_XbaI.o: restriction_digest.c dataset.h
 restriction_digest_XmnI.o: restriction_digest.c dataset.h
 	$(CC) $(CFLAGS) -c restriction_digest.c -o restriction_digest_XmnI.o \
  -D_digest_XmnI
-
+restriction_digest_HindIII.o: restriction_digest.c dataset.h
+	$(CC) $(CFLAGS) -c restriction_digest.c \
+ -o restriction_digest_HindIII.o -D_digest_HindIII
 fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 	$(CC) $(CFLAGS) fasta2kmer.c -o ./bin/fasta2kmer dataset.o kmers.o \
  binary_array.o $(PTHREAD) $(MATH)
@@ -83,6 +85,12 @@ digest_XmnI: digester.c restriction_digest.h restriction_digest_XmnI.o \
 	$(CC) $(CFLAGS) digester.c -o ./bin/digest_XmnI \
  dataset.o binary_array.o restriction_digest_XmnI.o $(MATH) $(PTHREAD) \
  -D_digest_XmnI
+
+digest_HindIII: digester.c restriction_digest.h restriction_digest_HindIII.o \
+                dataset.h dataset.o binary_array.h binary_array.o
+	$(CC) $(CFLAGS) digester.c -o ./bin/digest_HindIII \
+ dataset.o binary_array.o restriction_digest_HindIII.o $(MATH) $(PTHREAD) \
+ -D_digest_HindIII 
 
 pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
                 binary_array.o density.o 

@@ -243,6 +243,7 @@ dataset dataset_from_fasta(FILE* in) {
   size_t linebuffer_length;
   size_t sequence_length;
   int i;
+  size_t length_before_addition_of_line;
   
   rewind(in);
 
@@ -284,6 +285,7 @@ dataset dataset_from_fasta(FILE* in) {
       sscanf(line,"%s",linebuffer);
 
       linebuffer_length = strlen(linebuffer);
+      length_before_addition_of_line = ds.sequence_lengths[sequences];
       ds.sequence_lengths[sequences] += linebuffer_length;
       if(ds.sequence_lengths[sequences] > 1000) {
 	ds.sequences[sequences] =
@@ -293,7 +295,11 @@ dataset dataset_from_fasta(FILE* in) {
       for(i=0; i < linebuffer_length; i++) {
 	linebuffer[i] = toupper(linebuffer[i]);
       }
-      strcat(ds.sequences[sequences],linebuffer);
+      memcpy(ds.sequences[sequences]+length_before_addition_of_line,
+	     linebuffer,
+	     linebuffer_length);
+      ds.sequences[sequences][length_before_addition_of_line
+			      +linebuffer_length] = 0; 
     }
     
   }

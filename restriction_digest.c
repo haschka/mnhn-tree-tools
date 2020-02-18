@@ -51,6 +51,13 @@ void* digest_thread (void* arg) {
 	sequence[i+2] == 'T' &&
 	sequence[i+3] == 'T' &&
 	sequence[i+4] == 'C'
+#elif defined(_digest_HindIII)
+	sequence[i-1] == 'A' &&
+	sequence[  i] == 'A' &&
+	sequence[i+1] == 'G' &&
+	sequence[i+2] == 'C' &&
+	sequence[i+3] == 'T' &&
+	sequence[i+4] == 'T'
 #endif
 	) {
       n_sites[0]++;
@@ -70,6 +77,8 @@ dataset
 digest_XbaI
 #elif defined(_digest_XmnI)
 digest_XmnI
+#elif defined(_digest_HindIII)
+digest_HindIII
 #endif
 (char * sequence, size_t sequence_length, int n_threads) {
 
@@ -83,6 +92,9 @@ digest_XmnI
   size_t* sites;
   
 #if defined(_digest_XbaI)
+  size_t bases_prior_cut = 1;
+  size_t bases_post_cut = 5;
+#elif defined(_digest_HindIII)
   size_t bases_prior_cut = 1;
   size_t bases_post_cut = 5;
 #elif defined(_digest_XmnI)
