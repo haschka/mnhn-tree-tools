@@ -171,3 +171,4 @@ void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
 void dataset_to_fasta(FILE* outfile, dataset ds);
 
 void reverse_sequences(dataset *ds, char* binary_mask);
+void reverse_complement_sequences(dataset* ds, char* binary_mask);

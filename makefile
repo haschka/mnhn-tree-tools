@@ -22,9 +22,11 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      split_sets_to_newick virtual_evolution simulation_verification \
      find_sequence_in_split_sets tree_map_for_sequence tree_map_for_split_set \
      filter_split_sets_by_min \
-     pca2densitymap pca2densityfile reverse_with_mask \
+     pca2densitymap pca2densityfile \
+     reverse_with_mask reverse_complement_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
-     pca_visual_extract digest_XbaI digest_XmnI digest_HindIII
+     pca_visual_extract digest_XbaI digest_XmnI digest_HindIII \
+     find_satellite
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -52,6 +54,8 @@ kmers.o: kmers.c dataset.h kmers.h
 	$(CC) $(CFLAGS) -c kmers.c -o kmers.o
 density.o: density.c density.h dataset.h
 	$(CC) $(CFLAGS) -c density.c -o density.o
+filter.o: filter.c filter.h dataset.h smith-waterman.h
+	$(CC) $(CFLAGS) -c filter.c -o filter.o
 restriction_digest_XbaI.o: restriction_digest.c dataset.h
 	$(CC) $(CFLAGS) -c restriction_digest.c -o restriction_digest_XbaI.o \
  -D_digest_XbaI
@@ -74,6 +78,11 @@ reverse_with_mask: reverse_with_mask.c dataset.h binary_array.h dataset.o \
 	$(CC) $(CFLAGS) reverse_with_mask.c -o ./bin/reverse_with_mask \
  dataset.o binary_array.o $(MATH)
 
+reverse_complement_with_mask: reverse_with_mask.c dataset.h \
+                              binary_array.h dataset.o binary_array.o
+	$(CC) $(CFLAGS) reverse_complement_with_mask.c -o \
+ ./bin/reverse_complement_with_mask dataset.o binary_array.o $(MATH)
+
 digest_XbaI: digester.c restriction_digest.h restriction_digest_XbaI.o \
              dataset.h dataset.o binary_array.h binary_array.o
 	$(CC) $(CFLAGS) digester.c -o ./bin/digest_XbaI \
@@ -91,6 +100,11 @@ digest_HindIII: digester.c restriction_digest.h restriction_digest_HindIII.o \
 	$(CC) $(CFLAGS) digester.c -o ./bin/digest_HindIII \
  dataset.o binary_array.o restriction_digest_HindIII.o $(MATH) $(PTHREAD) \
  -D_digest_HindIII 
+
+find_satellite: find_satellite.c filter.o filter.h dataset.o binary_array.o \
+                dataset.h binary_array.o
+	$(CC) $(CFLAGS) find_satellite.c -o ./bin/find_satellite \
+ dataset.o binary_array.o filter.o smith_waterman.o $(MATH) $(PTHREAD)
 
 pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
                 binary_array.o density.o 

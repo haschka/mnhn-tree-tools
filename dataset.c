@@ -89,7 +89,7 @@ void dataset_to_fasta(FILE* f, dataset ds) {
   for(j=0;j < ds.n_values; j++) {
     fprintf(f,">sequence_%i\n",j);
     for ( k = 0;
-	  k < (strlen(ds.sequences[j])-1);
+	  k < (ds.sequence_lengths[j]-1);
 	  k++) {
       if( k != 0 && k%50 == 0 ) {
 	fprintf(f, "\n");
@@ -98,8 +98,8 @@ void dataset_to_fasta(FILE* f, dataset ds) {
 	fputc(ds.sequences[j][k],f);
       }
     }
-    if ( (strlen(ds.sequences[j])-1) != 0 &&
-	 (strlen(ds.sequences[j])-1) %50 == 0 ) {
+    if ( (ds.sequence_lengths[j]-1) != 0 &&
+	 (ds.sequence_lengths[j]-1) %50 == 0 ) {
       fprintf(f, "\n");
       fputc(ds.sequences[j][k],f);
     } else {
@@ -108,6 +108,37 @@ void dataset_to_fasta(FILE* f, dataset ds) {
     fprintf(f, "\n");
   }
 }
+
+void reverse_complement_sequences(dataset* ds, char* binary_mask) {
+  int i,j;
+  char* buffer = (char*)malloc(sizeof(char)*ds->max_sequence_length);
+  
+  for (i = 0 ; i<ds->n_values; i++) {
+    if (get_value_in_binary_array_at_index(binary_mask,i)) {
+      memcpy(buffer, ds->sequences[i], ds->sequence_lengths[i]);
+      for(j = 0; j<ds->sequence_lengths[i];j++) {
+	switch(buffer[ds->sequence_lengths[i]-1-j]) {
+	case 'A':
+	  ds->sequences[i][j] = 'T';
+	  break;
+	case 'C':
+	  ds->sequences[i][j] = 'G';
+	  break;
+	case 'G':
+	  ds->sequences[i][j] = 'C';
+	  break;
+	case 'T':
+	  ds->sequences[i][j] = 'A';
+	  break;
+	default:
+	  ds->sequences[i][j] = buffer[ds->sequence_lengths[i]-1-j];
+	  break;
+	}
+      }
+    }
+  }
+  free(buffer);
+}	
 
 void reverse_sequences(dataset* ds, char* binary_mask) {
   int i,j;
