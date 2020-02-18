@@ -24,7 +24,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      filter_split_sets_by_min \
      pca2densitymap pca2densityfile reverse_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
-     pca_visual_extract digest_XbaI
+     pca_visual_extract digest_XbaI digest_XmnI
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -52,8 +52,12 @@ kmers.o: kmers.c dataset.h kmers.h
 	$(CC) $(CFLAGS) -c kmers.c -o kmers.o
 density.o: density.c density.h dataset.h
 	$(CC) $(CFLAGS) -c density.c -o density.o
-restriction_digest.o: restriction_digest.c dataset.h
-	$(CC) $(CFLAGS) -c restriction_digest.c -o restriction_digest.o
+restriction_digest_XbaI.o: restriction_digest.c dataset.h
+	$(CC) $(CFLAGS) -c restriction_digest.c -o restriction_digest_XbaI.o \
+ -D_digest_XbaI
+restriction_digest_XmnI.o: restriction_digest.c dataset.h
+	$(CC) $(CFLAGS) -c restriction_digest.c -o restriction_digest_XmnI.o \
+ -D_digest_XmnI
 
 fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 	$(CC) $(CFLAGS) fasta2kmer.c -o ./bin/fasta2kmer dataset.o kmers.o \
@@ -68,10 +72,17 @@ reverse_with_mask: reverse_with_mask.c dataset.h binary_array.h dataset.o \
 	$(CC) $(CFLAGS) reverse_with_mask.c -o ./bin/reverse_with_mask \
  dataset.o binary_array.o $(MATH)
 
-digest_XbaI: digest_XbaI.c restriction_digest.h restriction_digest.o \
+digest_XbaI: digester.c restriction_digest.h restriction_digest_XbaI.o \
              dataset.h dataset.o binary_array.h binary_array.o
-	$(CC) $(CFLAGS) digest_XbaI.c -o ./bin/digest_XbaI \
- dataset.o binary_array.o restriction_digest.o $(MATH)
+	$(CC) $(CFLAGS) digester.c -o ./bin/digest_XbaI \
+ dataset.o binary_array.o restriction_digest_XbaI.o $(MATH) $(PTHREAD) \
+ -D_digest_XbaI
+
+digest_XmnI: digester.c restriction_digest.h restriction_digest_XmnI.o \
+             dataset.h dataset.o binary_array.h binary_array.o
+	$(CC) $(CFLAGS) digester.c -o ./bin/digest_XmnI \
+ dataset.o binary_array.o restriction_digest_XmnI.o $(MATH) $(PTHREAD) \
+ -D_digest_XmnI
 
 pca2densitymap: pca2densitymap.c dataset.h binary_array.h density.h dataset.o \
                 binary_array.o density.o 
