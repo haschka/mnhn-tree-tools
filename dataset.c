@@ -450,7 +450,7 @@ void load_projections_from_file_into_dataset(FILE* projections,
       _exit(1);
     }
 #else
-    if (NULL == (ds->values[i] = (float*)malloc(sizeof(float)*ds.n_values))) {
+    if (NULL == (ds->values[i] = (float*)malloc(sizeof(float)*ds->n_values))) {
       printf("Could not allocate memory to load projections \n");
       _exit(1);
     }    
