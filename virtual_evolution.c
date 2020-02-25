@@ -75,7 +75,11 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 
   while(partition_count < partitions) {
 
-    mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
+    if (max_time != -1) {
+      mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
+    } else {
+      mutation_time_d = 1.;
+    }
     mutation_time_i = (int)mutation_time_d;
 
     printf("Partition %3i will be created after %6i cycles of %6i "
@@ -121,8 +125,12 @@ dataset generate_dataset_using_evolution_simulation(int seed,
     partition_count++;
   }
 
+  if (max_time != -1) {
+    mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
+  } else {
+    mutation_time_d = 1.;
+  }
 
-  mutation_time_d = (double)max_time*((double)rand()/(double)RAND_MAX);
   mutation_time_i = (int)mutation_time_d;
 
   printf("All partitions will be mutated for  %6i cycles of %6i "
@@ -188,7 +196,8 @@ int main(int argc, char** argv) {
 	   " [int] sequence length\n"
 	   " [int] number of sequences\n"
 	   " [int] number of partitions (amplifications)\n"
-	   " [int] maximum time between amplification creation\n"
+	   " [int] maximum time between amplification creation -1 for 1 "
+	   " constant.\n"
 	   " [int] mutation rate\n"
 	   " [FASTA] output file\n");
     return(1);
