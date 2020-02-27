@@ -3,7 +3,8 @@ MPICC=mpicc
 #CFLAGS=-g
 #CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-CFLAGS=-g -O3 -march=native -ftree-vectorize
+#CFLAGS= -O3 -mcpu=750 -mtune=750 -fomit-frame-pointer 
+CFLAGS= -O3 -march=native -ftree-vectorize -ftree-loop-linear -fomit-frame-pointer
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
