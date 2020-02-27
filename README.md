@@ -1,6 +1,6 @@
 * How to build
 
-create a bin subdirectory: i.e. by typing `mkdir build`
+create a bin subdirectory: i.e. by typing `mkdir bin`
 
 install libSDL2, libpng, mpi and OpenCL on your distribution/unix-system
 together with the development version of packages (i.e. with header files)
