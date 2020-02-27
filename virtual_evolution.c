@@ -15,7 +15,8 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 						    int n_sequences,
 						    int partitions,
 						    int max_time,
-						    int mutation_rate) {
+						    int mutation_rate,
+						    int assure_mutation) {
   int i,j;
   dataset ds;
   
@@ -114,6 +115,17 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 
     mutation_sequence_i = (int)mutation_sequence_d;
 
+    if(assure_mutation) {
+      mutation_site_d =
+	(double)ds.max_sequence_length*(double)(rand()/(double)RAND_MAX);
+      mutation_site_i = (int)mutation_site_d;
+      
+      random_value_d=4*((double)rand()/(double)RAND_MAX);
+      random_value_i = (char)random_value_d;
+      
+      ds.sequences[mutation_sequence_i][mutation_site_i] = random_value_i;
+    }
+    
     for(i=0;i<partition_size;i++) {
       ds.sequences[partition_size*partition_count+i] =
 	(char*)malloc(sizeof(char)*(ds.max_sequence_length+1));
@@ -186,8 +198,10 @@ int main(int argc, char** argv) {
 
   dataset ds;
 
-  int seed, sequence_length, n_sequences, partitions, max_time, mutation_rate;
+  int seed, sequence_length, n_sequences, partitions, max_time, mutation_rate,
+    assure_mutation;
 
+  
   FILE* f;
   
   if (argc < 7) {
@@ -199,6 +213,7 @@ int main(int argc, char** argv) {
 	   " [int] maximum time between amplification creation -1 for 1 "
 	   " constant.\n"
 	   " [int] mutation rate\n"
+	   " [int] assure mutation of amplification template\n"
 	   " [FASTA] output file\n");
     return(1);
   }
@@ -210,15 +225,17 @@ int main(int argc, char** argv) {
   sscanf(argv[4],"%i",&partitions);
   sscanf(argv[5],"%i",&max_time);
   sscanf(argv[6],"%i",&mutation_rate);
-
-  if ( NULL == (f = fopen(argv[7], "w"))) file_error(argv[7]);
+  sscanf(argv[7],"%i",&assure_mutation);
+  
+  if ( NULL == (f = fopen(argv[8], "w"))) file_error(argv[8]);
   
   ds = generate_dataset_using_evolution_simulation(seed,
 						   sequence_length,
 						   n_sequences,
 						   partitions,
 						   max_time,
-						   mutation_rate);
+						   mutation_rate,
+						   assure_mutation);
 
   dataset_to_fasta(f,ds);
   free_sequences_from_dataset(ds);
