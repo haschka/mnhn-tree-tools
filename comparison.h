@@ -27,3 +27,5 @@ double sigma_from_smith_waterman_datasets(double mean,
 
 double mean_from_smith_waterman_datasets(dataset ds_one, dataset ds_two,
 					 size_t n_threads);
+
+void print_SW_PCA_L_comparison(FILE* f, dataset ds);

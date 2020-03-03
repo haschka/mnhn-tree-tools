@@ -1,9 +1,9 @@
 CC=gcc
 MPICC=mpicc
-#CFLAGS=-g
+CFLAGS=-g
 #CFLAGS=-g -fsanitize=address
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-CFLAGS=-g -O3 -march=native -ftree-vectorize
+#CFLAGS=-g -O3 -march=native -ftree-vectorize
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
@@ -14,7 +14,8 @@ SDL=$(shell sdl2-config --cflags) $(shell sdl2-config --libs)
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
-     compareSW silhouette consens sequence_multiplicity adaptive_clustering_SW \
+     compareSW silhouette compare_norms consens sequence_multiplicity \
+     adaptive_clustering_SW \
      adaptive_clustering_SW_GPU adaptive_clustering_PCA \
      adaptive_clustering_kmer_L1 adaptive_clustering_kmer_L2 \
      adaptive_clustering_SW_MPI_GPU \
@@ -29,8 +30,8 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      pca_visual_extract digest_XbaI digest_XmnI digest_HindIII \
      find_satellite
 
-compare.o: compare.c compare.h dataset.h smith-waterman.h
-	$(CC) $(CFLAGS) -c comparison.c -o comparison
+comparison.o: comparison.c comparison.h dataset.h smith-waterman.h
+	$(CC) $(CFLAGS) -c comparison.c -o comparison.o
 smith_waterman.o: smith-waterman.c smith-waterman.h
 	$(CC) $(CFLAGS) -c smith-waterman.c -o smith_waterman.o
 binary_array.o: binary_array.c binary_array.h
@@ -282,10 +283,15 @@ compareSW: compareSW.c dataset.h comparison.h smith_waterman.o comparison.o \
 	$(CC) $(CFLAGS) compareSW.c -o ./bin/compareSW smith_waterman.o \
  comparison.o dataset.o binary_array.o $(MATH) $(PTHREAD)
 
-silhouette: dataset.h comparison.h dataset.h dataset.o comparison.o \
-            smith_waterman.o binary_array.o
+silhouette: dataset.h comparison.h dataset.o comparison.o \
+            smith_waterman.o binary_array.o silhouette.c
 	$(CC) $(CFLAGS) silhouette.c -o ./bin/silhouette smith_waterman.o \
  comparison.o dataset.o binary_array.o $(MATH) $(PTHREAD)
+
+compare_norms: compare_norms.c dataset.h comparison.h dataset.o comparison.o \
+               binary_array.o smith_waterman.o
+	$(CC) $(CFLAGS) compare_norms.c -o ./bin/compare_norms \
+ smith_waterman.o comparison.o dataset.o binary_array.o $(MATH) $(PTHREAD)
 
 consens: consens.c dataset.h dataset.o binary_array.o
 	$(CC) $(CFLAGS) consens.c -o ./bin/consens dataset.o binary_array.o \

@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  if ( NULL == ( projection_f = fopen(argv[8], "r"))) file_error(argv[1]);
+  if ( NULL == ( projection_f = fopen(argv[8], "r"))) file_error(argv[8]);
   load_projections_from_file_into_dataset(projection_f,dimensions,&ds);
   fclose(projection_f);
 

@@ -349,6 +349,42 @@ double sigma_from_smith_waterman_distance_matrix(unsigned long* matrix,
   return(sqrt(sigma)/((double)ds_one.n_values+(double)ds_two.n_values));
 }
 
+void print_SW_PCA_L_comparison(FILE* f, dataset ds) {
+
+  int i,j,k;
+
+  double dist_SW;
+  double dist_PCA_L_one, dist_PCA_L_two;
+  double dist_buffer;
+  
+  int* work =
+    (int*)malloc(sizeof(int)*(ds.max_sequence_length+1)
+		 *(ds.max_sequence_length+1));
+
+  fprintf(f,"i j SW L1 L2\n");
+  
+  for(i=0;i<ds.n_values;i++) {
+    for(j=0;j<i;j++) {
+      dist_SW = score(ds.sequences[i],ds.sequences[j],
+		      ds.sequence_lengths[i],
+		      ds.sequence_lengths[j],work);
+
+      dist_PCA_L_two = 0;
+      dist_PCA_L_one = 0;
+      for(k=0;k<ds.n_dimensions;k++) {
+	dist_buffer = (ds.values[k][j]-ds.values[k][i]);
+	dist_PCA_L_two += dist_buffer*dist_buffer;
+	dist_PCA_L_one += fabs(dist_buffer);
+      }
+      dist_PCA_L_two = sqrt(dist_PCA_L_two);	
+      fprintf(f,"%i %i %lf %lf %lf\n",i,j,
+	      dist_SW,dist_PCA_L_two,dist_PCA_L_one);
+    }
+  }
+  free(work);
+}
+  
+
 void shortest_longest_distance_in_matrix(unsigned long* matrix,
 					 unsigned long* min,
 					 unsigned long* max,
