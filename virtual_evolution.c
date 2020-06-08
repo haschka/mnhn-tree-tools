@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
 	   " [int] maximum time between amplification creation -1 for 1 "
 	   " constant.\n"
 	   " [int] mutation rate\n"
-	   " [int] assure mutation of amplification template\n"
+	   " [int] add n mutations to each amplification template\n"
 	   " [FASTA] output file\n");
     return(1);
   }
