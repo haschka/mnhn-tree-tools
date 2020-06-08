@@ -17,7 +17,7 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 						    int max_time,
 						    int mutation_rate,
 						    int assure_mutation) {
-  int i,j;
+  int i,j,counter;
   dataset ds;
   
   int partition_size;
@@ -32,6 +32,8 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 
   double mutation_site_d;
   int mutation_site_i;
+
+  int prev_mutation_site;
 
   double mutation_sequence_d;
   int mutation_sequence_i;
@@ -115,15 +117,28 @@ dataset generate_dataset_using_evolution_simulation(int seed,
 
     mutation_sequence_i = (int)mutation_sequence_d;
 
-    if(assure_mutation) {
-      mutation_site_d =
-	(double)ds.max_sequence_length*(double)(rand()/(double)RAND_MAX);
-      mutation_site_i = (int)mutation_site_d;
+    if(assure_mutation > 0) {
+      prev_mutation_site = -1;
+      for(i=0;i<assure_mutation;i++) {
+	
+	mutation_site_d =
+	  (double)ds.max_sequence_length*(double)(rand()/(double)RAND_MAX);
+	mutation_site_i = (int)mutation_site_d;
+	counter = 0;
+	while(mutation_site_i == prev_mutation_site) {
+	  mutation_site_d =
+	    (double)ds.max_sequence_length*(double)(rand()/(double)RAND_MAX);
+	  mutation_site_i = (int)mutation_site_d;
+	  counter++;
+	  if (counter == 100) break;
+	}
+	prev_mutation_site = mutation_site_i;
+	
+	random_value_d=4*((double)rand()/(double)RAND_MAX);
+	random_value_i = (char)random_value_d;
       
-      random_value_d=4*((double)rand()/(double)RAND_MAX);
-      random_value_i = (char)random_value_d;
-      
-      ds.sequences[mutation_sequence_i][mutation_site_i] = random_value_i;
+	ds.sequences[mutation_sequence_i][mutation_site_i] = random_value_i;
+      }
     }
     
     for(i=0;i<partition_size;i++) {

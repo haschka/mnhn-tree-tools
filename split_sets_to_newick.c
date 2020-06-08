@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
 	   " cluster \n"
 	   " [file1 ... filen] split_sets obtainted from adaptive clustering \n"
            "                   calculations in order from lowest to hight\n");
+    return(1);
   }
 
   sscanf(argv[1], "%i", &min_members);
