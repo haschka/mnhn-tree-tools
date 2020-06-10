@@ -1,9 +1,10 @@
 CC=gcc
 MPICC=mpicc
-CFLAGS=-g
-#CFLAGS=-g -fsanitize=address
+#CFLAGS=-g
+#CFLAGS=-g
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
-#CFLAGS=-g -O3 -march=native -ftree-vectorize
+#CFLAGS= -O3 -mcpu=750 -mtune=750 -fomit-frame-pointer 
+CFLAGS= -O3 -march=native -ftree-vectorize -ftree-loop-linear -fomit-frame-pointer
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
@@ -21,7 +22,8 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      adaptive_clustering_SW_MPI_GPU \
      split_set_to_fasta print_connections \
      split_set_to_matrix_line split_set_to_matrix_annotation \
-     split_sets_to_newick virtual_evolution simulation_verification \
+     split_sets_to_newick split_set_to_projections \
+     virtual_evolution simulation_verification \
      find_sequence_in_split_sets tree_map_for_sequence tree_map_for_split_set \
      filter_split_sets_by_min \
      pca2densitymap pca2densityfile \
@@ -139,6 +141,14 @@ split_set_from_annotation: split_set_from_annotation.c dataset.h \
 	$(CC) $(CFLAGS) split_set_from_annotation.c \
  -o ./bin/split_set_from_annotation dataset.o binary_array.o cluster_io.o \
  $(MATH)
+
+split_set_to_projections: split_set_to_projections.c dataset.h \
+                          binary_array.h cluster.h dataset.o binary_array.o \
+                          cluster_io.o
+	$(CC) $(CFLAGS) split_set_to_projections.c \
+ -o ./bin/split_set_to_projections dataset.o binary_array.o cluster_io.o \
+ $(MATH)
+
 
 find_sequence_in_split_sets: find_sequence_in_split_sets.c dataset.h \
                              binary_array.h cluster.h dataset.o binary_array.o \

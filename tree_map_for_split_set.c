@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<unistd.h>
 #include<string.h>
+#include<math.h>
 
 #include"dataset.h"
 #include"cluster.h"
@@ -23,12 +24,12 @@ void print_arguments() {
 	 "  [split_set] file containing clusters to be mapped onto tree\n"
 	 "  [fasta] database of sequences the split sets are refering to\n"
 	 "  (int) number of clusters to color from splitset \n"
-	 "  (int) 0 or 1 use gradient for number of sequences from cluster \n"
-	 "        if 1 the colors are given from: white,\n"
-	 "                                         1 sequence \n"
-	 "                                        to the color selected,\n"
-	 "                                         all sequences \n"
-	 
+	 "  (int) 0, 1 or 2 \n"
+	 "        0: no gradient \n"
+	 "        1: linear gradient \n"
+	 "        2: logarithmic (base 10) gradient \n"
+	 "        the colors are given from: white,\n"
+	 "                                   to the color selected,\n"
 	 "  [(int),string ... (int),string] number of cluster to color in \n"
 	 "                                  in the color given by the "
 	 "string \n"
@@ -37,6 +38,7 @@ void print_arguments() {
 	 "                                  correspond to the number of \n"
 	 "                                  clusters ( prev. argument ) \n"
 	 "  [split_sets...] cluster files corresponding to newick tree\n");
+  _exit(1);
 }
 
 cluster_color map_input_string_to_cluster_color(char* in, int max_clusters) {
@@ -186,8 +188,8 @@ int main(int argc, char** argv) {
 
   sscanf(argv[4],"%i",&gradient_bool);
   
-  if(gradient_bool != 1 && gradient_bool != 0) {
-    printf("Malformed input for gradient %i is not 1 or 0\n",gradient_bool);
+  if(gradient_bool != 1 && gradient_bool != 0 && gradient_bool != 2) {
+    printf("Malformed input for gradient %i is not 0, 1 or 2\n",gradient_bool);
     print_arguments();
     return(1);
   }
@@ -215,18 +217,29 @@ int main(int argc, char** argv) {
 							 k,
 							 n_input_clusters);
 	    if(gradient_bool) {
+	      if(gradient_bool == 1) {
+		
 	      fraction_in_cluster =
 		(float)intersection.n_members
 		/(float)input_split_set.clusters[k].n_members;
+	      
+	      } else if (gradient_bool == 2) {
+		fraction_in_cluster =
+		  log10f((float)intersection.n_members)
+		  /(log10f((float)input_split_set.clusters[k].n_members));
+	      }	
 	      current_color = get_color_from_cluster_index(cluster_colors,
 							   k,
 							   n_input_clusters);
 	      current_color.r =
-		(int)((float)current_color.r*(float)fraction_in_cluster);
+		255 - (int)((float)(255-current_color.r)
+			    *(float)fraction_in_cluster);
 	      current_color.g =
-		(int)((float)current_color.g*(float)fraction_in_cluster);
+		255 - (int)((float)(255-current_color.g)
+			    *(float)fraction_in_cluster);
 	      current_color.b =
-		(int)((float)current_color.b*(float)fraction_in_cluster);
+		255 - (int)((float)(255-current_color.b)
+			    *(float)fraction_in_cluster);
 	    }
 	    sprintf(out_color,"#%02x%02x%02x",
 		    current_color.r,current_color.g,current_color.b);
@@ -246,8 +259,12 @@ int main(int argc, char** argv) {
 	    
 	    printf("stroke:%s I ",out_color);
 	    printf("L%iC%iN%i \n",i,j,s.clusters[j].n_members);
+	  } else {
+	    sprintf(out_color,"#FFFFFF");
+	    printf("stroke:%s I ",out_color);
+	    printf("L%iC%iN%i \n",i,j,s.clusters[j].n_members);
 	  }
-	}
+	} 
       }
     }
     free_split_set_and_associated_clusters(s);
