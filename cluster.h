@@ -177,10 +177,13 @@ void free_split_set_and_associated_clusters(split_set s);
  *          connection[i] = generate_split_set_relation(sets[i],sets[i+1]);
  * \param sets the split_sets obtained from a clusting run or adaptive 
  *             clustering run.
+ * \param tree_lengths an array to set the branch lengths of the trees 
+ *                     between the layers. If tree_lengths == NULL 
+ *                     The branch lengths are 1 everywhere.
  * \return A tree node structure holding the entire through recursion
  */
 tree_node* generate_tree(int n_layers, cluster_connections** c,
-			 split_set* sets);
+			 split_set* sets, double* tree_lengths);
 
 /* \brief prints a tree in newick format to a given file
  * This function uses a recursive tree traversal method which is optimal
@@ -189,6 +192,14 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
  * \param root the tree to write out, i.e. obtained by generate_tree
  */
 void print_tree(FILE* f, tree_node* root);
+
+double* get_epsilon_dist_from_adaptive_clustering_output(FILE* f,
+							 int n_layers);
+
+double* densities_from_epsilons(int type, int dimensions,
+				double* epsilons, int n_epsilons,
+				int min_points);
+
 
 /* \brief creates a cluster that holds, provides an index for identical 
  *        sequences.
@@ -203,3 +214,6 @@ void print_tree(FILE* f, tree_node* root);
 cluster cluster_from_sequence_in_dataset(dataset ds,
 					 char* seq,
 					 size_t seq_len);
+
+
+double* array_deltas(double* array, int array_length);

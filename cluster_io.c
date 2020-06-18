@@ -9,9 +9,120 @@
 #include"dataset.h"
 #include"cluster.h"
 #include"binary_array.h"
+#include"volumes.h"
+
+double* array_deltas(double* array, int array_length) {
+
+  int i;
+  
+  double* diffs = (double*)malloc(sizeof(double)*(array_length-1));
+
+  for(i=0;i<array_length-1;i++) {
+    diffs[i] =  array[i] - array[i+1];
+  }
+  return(diffs);
+}
+
+double* get_epsilon_dist_from_adaptive_clustering_output(FILE* f,
+							 int n_layers) {
+ 
+  int i;
+  char* line = NULL;
+  size_t line_size;
+                         
+  char inital_check[] = "epsilon_start:"; /* 13 chars */
+  char layer_check[] =  "  Epsilon at layer"; /* 17 chars */
+
+  double * epsilons = (double*)malloc(sizeof(double)*n_layers);
+  int epsilon_counter = 0;
+  
+  rewind(f);
+  
+  while ( -1 != getline(&line, &line_size, f)) {
+
+    if (line_size > 10) {
+
+      if (epsilon_counter == 0) {
+      
+	for(i=0;i<14;i++) {
+	  if (inital_check[i] != line[i]) {
+	    goto check_layer;
+	  }
+	}
+	sscanf(line,"%*s %lf", epsilons);
+	epsilon_counter = 1;
+      }
+      
+    check_layer:
+      
+      for(i=0;i<17;i++) {
+	if(layer_check[i] != line[i]) {
+	  goto checks_finished;
+	}
+      }
+      
+      if(epsilon_counter < 1) {
+	printf("Malformed output file epsilon_start not found before \n "
+	       "  Epsilon at layer: \n");
+	_exit(1);
+      }
+
+      if(epsilon_counter == n_layers) {
+	goto all_read;
+      }
+      
+      sscanf(line,"  %*s %*s %*s %*s %lf", epsilons+epsilon_counter);
+      epsilon_counter++;
+      
+    checks_finished:
+      i=0;
+      
+    }
+  }
+  
+ all_read:
+  if (epsilon_counter < n_layers) {
+    printf("Not enough layers in output file! \n");
+    printf("Counted %i layers, requested %i layers! \n",
+	   epsilon_counter,
+	   n_layers);
+    _exit(1);
+  }
+  free(line);
+  return(epsilons);
+}
+
+double* densities_from_epsilons(int type, int dimensions,
+				double* epsilons, int n_epsilons,
+				int min_points) {
+
+  int i;
+
+  double(*volume_function)(int,double);
+
+  double* densities = (double*)malloc(sizeof(double)*n_epsilons);
+  
+  switch(type) {
+  case 1:
+    volume_function = &vol_hypercube;
+    break;
+  case 2:
+    volume_function = &vol_hypersphere;
+    break;
+  default:
+    printf("Wrong parameter to densities_from_epsilon (min_points)\n");
+    _exit(1);
+  }
+  
+  for (i=0;i<n_epsilons;i++) {
+    densities[i] = min_points/(volume_function(dimensions,epsilons[i]));
+  }
+
+  return(densities);
+}							      
 
 tree_node* generate_tree(int n_layers, cluster_connections** c,
-			 split_set *sets) {
+			 split_set *sets, double *tree_lengths) {
   
   int i, j, k;
 
@@ -24,7 +135,19 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
 				  *sets[i].n_clusters);
     for(j=0;j<sets[i].n_clusters;j++) {
       nodes[i][j].id = NULL;
-      nodes[i][j].length = 0;
+      if(tree_lengths != NULL) {
+	if(i==(n_layers-1)) {
+	  nodes[i][j].length = 0;
+	} else {
+	  nodes[i][j].length = tree_lengths[i];
+	}
+      } else {
+	if(i==(n_layers-1)) {
+	  nodes[i][j].length = 0;
+	} else {
+	  nodes[i][j].length = 1;
+	}
+      }	  
       nodes[i][j].n_members = 0;
       nodes[i][j].child = NULL;
       nodes[i][j].neighbor = NULL;
@@ -46,7 +169,7 @@ tree_node* generate_tree(int n_layers, cluster_connections** c,
 	current_node->id = (char*)malloc(sizeof(char)*20);
 	current_node->n_members =
 	  sets[i-1].clusters[c[i-1][j].connections[k]].n_members;
-	sprintf(current_node->id,"L%iC%iN%i:1",
+	sprintf(current_node->id,"L%iC%iN%i",
 		i-1,
 		c[i-1][j].connections[k],
 		current_node->n_members);
@@ -90,25 +213,26 @@ split_set filtered_split_set_by_min_size(split_set s_in, int min_size) {
   s_out.clusters = (cluster*)realloc(s_out.clusters,sizeof(cluster)*count);
   return(s_out);
 }
-   
-	  
-void print_tree(FILE*f, tree_node* root)
+
+void print_tree_worker(FILE*f, tree_node* root)
 {
   tree_node* n;
-  if(root->child!=NULL)
-    {
-      fprintf(f,"(");
-      for(n=root->child;n!=NULL;n=n->neighbor)
-	{
-	  if(n!=root->child) fprintf(f,",");
-	  print_tree(f,n);
-	}
-      fprintf(f,")");
+  if(root->child!=NULL) {
+    fprintf(f,"(");
+    for(n=root->child;n!=NULL;n=n->neighbor) {
+      if(n!=root->child) fprintf(f,",");
+      print_tree_worker(f,n);
     }
+    fprintf(f,")");
+  }
   fprintf(f,"%s",root->id);
-  //if(root->parent!=NULL) printf(":%f",root->length);
+  if(root->parent!=NULL) printf(":%f",root->length);
 }
- 
+
+void print_tree(FILE*f, tree_node* root) {
+  print_tree_worker(f,root);
+  fprintf(f,";");
+}
 
 void create_single_cluster_file_with_values(char* filename, cluster cl,
 					    dataset ds) {
