@@ -2,6 +2,8 @@
 #include<stdlib.h>
 #include<string.h>
 #include<pthread.h>
+#include<ctype.h>
+#include<unistd.h>
 
 #include"dataset.h"
 #include"kmers.h"
@@ -17,16 +19,17 @@ typedef struct {
 
 pthread_mutex_t lock;
 
-static inline char* gen_dna_string_from_binary(size_t kmer_length, int binary) {
+static inline char* gen_dna_string_from_binary(size_t kmer_length,
+					       unsigned long binary) {
 
   char* s = (char*)malloc(sizeof(char)*(kmer_length+1));
 
-  int i;
+  unsigned long i;
   
-  int test_a;
-  int test_b;
+  unsigned long test_a;
+  unsigned long test_b;
 
-  int res;
+  unsigned long res;
 
   for(i=0;i<kmer_length;i++) {
 
@@ -69,9 +72,9 @@ size_t number_of_kmers_from_length (size_t kmer_length) {
 
 char** gen_dna_kmers(size_t kmer_length) {
 
-  int i;
+  unsigned long i;
 
-  int a = 0;
+  unsigned long a = 0;
 
   char** kmers;
   
@@ -83,9 +86,10 @@ char** gen_dna_kmers(size_t kmer_length) {
 
   kmers = (char**)malloc(sizeof(char*)*(a+1));
   
-  for(i=a;i>=0;i--) {
+  for(i=a;i>0;i--) {
     kmers[i] = gen_dna_string_from_binary(kmer_length, i);
   }
+  kmers[0] = gen_dna_string_from_binary(kmer_length, 0);
   return(kmers);
 }
 
@@ -264,3 +268,67 @@ void free_kmer_frequencies(kmer_frequencies freq) {
   free(freq.frequencies);
 }
 
+dataset generate_n_permutations_for_sequence(dataset ds, size_t index) {
+
+  dataset return_set;
+
+  size_t length = ds.sequence_lengths[index];
+  char* sequence = ds.sequences[index];
+
+  size_t i,j;
+  size_t N_count = 0, n_permutations;
+  size_t* n_position_array = (size_t*)malloc(sizeof(size_t)*length);
+
+  char** kmers;
+
+  char** sequences;
+  
+  if(index > ds.n_values) {
+    printf("Error index out of range in"
+	   "generate_n_permultations_for_sequence()\n");
+    _exit(1);
+  }
+  
+  for(i=0;i<length;i++) {
+    if ( 'N' == toupper(sequence[i]) ) {
+      n_position_array[N_count] = i;
+      N_count++;
+    }
+  }
+  
+  if(N_count > sizeof(unsigned long)*4) {
+    printf("Error to many Ns in sequence \n"
+	   "generate_n_permultations_for_sequence()\n"
+	   "is currently limited to %i Ns in sequence\n",
+	   (int)sizeof(unsigned long)*4);
+    _exit(1);
+  }
+ 
+  kmers = gen_dna_kmers(N_count);
+  
+  n_permutations = number_of_kmers_from_length(N_count);
+  sequences = (char**)malloc(sizeof(char*)*n_permutations);
+
+  return_set.sequence_lengths = (size_t*)malloc(sizeof(size_t)*n_permutations);
+  
+  for(i=0;i<n_permutations;i++) {
+    sequences[i] = (char*)malloc(sizeof(char)*length+1);
+    memcpy(sequences[i],sequence,length);
+    sequences[i][length]=0;
+    for(j=0;j<N_count;j++) {
+      sequences[i][n_position_array[j]] = kmers[i][j];
+    }
+    return_set.sequence_lengths[i] = length;
+  }
+  free_kmers(kmers,N_count);
+
+  return_set.sequences = sequences;
+  return_set.max_sequence_length = length;
+  return_set.n_values = n_permutations;
+
+  return(return_set);
+ 
+}
+		
+  
+  
