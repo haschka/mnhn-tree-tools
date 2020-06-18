@@ -341,8 +341,8 @@ dataset dataset_from_fasta(FILE* in) {
   }
   free(line);
   return(ds);
-}
-
+}  
+  
 data_shape shape_from_kmer_file(int infile) {
 
   data_shape s;

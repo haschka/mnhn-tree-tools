@@ -29,7 +29,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      reverse_with_mask reverse_complement_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
      pca_visual_extract digest_XbaI digest_XmnI digest_HindIII \
-     find_satellite
+     find_satellite replace_N_sequence
 
 compare.o: compare.c compare.h dataset.h smith-waterman.h
 	$(CC) $(CFLAGS) -c comparison.c -o comparison
@@ -73,6 +73,11 @@ restriction_digest_HindIII.o: restriction_digest.c dataset.h
 fasta2kmer: fasta2kmer.c dataset.h kmers.h dataset.o kmers.o binary_array.o
 	$(CC) $(CFLAGS) fasta2kmer.c -o ./bin/fasta2kmer dataset.o kmers.o \
  binary_array.o $(PTHREAD) $(MATH)
+
+replace_N_sequence: replace_N_sequence.c dataset.h kmers.h dataset.o \
+                    kmers.o binary_array.o
+	$(CC) $(CFLAGS) replace_N_sequence.c -o ./bin/replace_N_sequence \
+ dataset.o kmers.o binary_array.o $(PTHREAD) $(MATH)
 
 kmer2pca: kmer2pca.c 
 	$(CC) $(CFLAGS) kmer2pca.c -o ./bin/kmer2pca -mavx $(PTHREAD) $(MATH) \

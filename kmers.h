@@ -80,3 +80,4 @@ void write_kmer_base(FILE* f,kmer_frequencies freq);
  */
 void free_kmer_frequencies(kmer_frequencies freq);
 
+dataset generate_n_permutations_for_sequence(dataset ds, size_t index);

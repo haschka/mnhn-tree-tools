@@ -16,6 +16,7 @@ void file_error(char* path) {
 typedef struct{
   int n_threads;
   int thread_num;
+  size_t query_index;
   int* partial_scores;
   int* partial_minimal_sequence_indicies;
   dataset* ds;
@@ -46,7 +47,7 @@ void* search_thread(void* arg) {
 
   for(i=start;i<end;i++) {
     current_score = score(th->ds->sequences[i],
-			  th->query->sequences[0],
+			  th->query->sequences[th->query_index],
 			  th->ds->sequence_lengths[i],
 			  th->query->sequence_lengths[0],
 			  NULL);
@@ -86,18 +87,22 @@ int main(int argc, char** argv) {
   
   int current_score, current_index, minimal_sequence_index;
 
-  if(argc < 5) {
+  unsigned long idx;
+  
+  if(argc < 6) {
     printf("Arguments are: \n"
 	   "[file] Fasta file of the database to find the closest sequence in\n"
 	   "[file] Fasta file containing the query sequence \n"
+	   " [int] use n_th sequence in fasta query file \n"
 	   " [int] number of threads to use for this search \n"
 	   "[file] output fasta containing the closest sequence in the"
 	   " dataset\n");
     return(1);
   }
-  
-  sscanf(argv[3],"%i",&n_threads);
-  sscanf(argv[4],"%s",filename);
+
+  sscanf(argv[3],"%lu",&idx);
+  sscanf(argv[4],"%i",&n_threads);
+  sscanf(argv[5],"%s",filename);
 
   threads = (pthread_t*)malloc(sizeof(pthread_t)*n_threads);
   th = (search_thread_handler*)malloc(sizeof(search_thread_handler)*n_threads);
@@ -119,6 +124,7 @@ int main(int argc, char** argv) {
     th[i].n_threads = n_threads;
     th[i].thread_num = i;
     th[i].partial_scores = partial_score;
+    th[i].query_index = (size_t)idx-1;
     th[i].partial_minimal_sequence_indicies = partial_indicies;
     th[i].ds = &ds;
     th[i].query = &query;
