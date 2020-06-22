@@ -500,8 +500,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
 				 NULL,
 				 0,NULL,NULL);
 
-    
-
     err = clEnqueueReadBuffer(ocl.cmdq[i], ocl.acc_distances[i],
 			      CL_FALSE, 0,
 			      acc_distance_size*sizeof(int),
@@ -1095,14 +1093,14 @@ void* adaptive_dbscan_thread(void* arg) {
     current_split_set = th->dbscanner(ds, epsilon, th->minpts);
 #endif
 
-    pthread_mutex_lock(th->lock_eps);
+    pthread_mutex_lock(th->lock_split_sets);
     index = th->split_set_index[0];
     th->split_set_index[0]++;
     th->split_sets[0] =
       (split_set*)realloc(th->split_sets[0],
 			  sizeof(split_set)*th->split_set_index[0]);
     th->split_sets[0][index] = current_split_set;
-    pthread_mutex_unlock(th->lock_eps);
+    pthread_mutex_unlock(th->lock_split_sets);
     
     if(th->split_sets[0][index].n_clusters == 1) {
       pthread_mutex_lock(th->lock_stop);
