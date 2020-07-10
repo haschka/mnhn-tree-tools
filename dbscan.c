@@ -67,6 +67,7 @@ typedef struct {
   int* split_set_index;
   pthread_mutex_t* lock_stop;
   pthread_mutex_t* lock_eps;
+  pthread_mutex_t* lock_split_sets;
   int* stop;
   split_set** split_sets;
   int* stopindex;
@@ -498,8 +499,6 @@ static inline neighbors region_query(int point, float epsilon, dataset ds,
 				 &acc_distance_size,
 				 NULL,
 				 0,NULL,NULL);
-
-    
 
     err = clEnqueueReadBuffer(ocl.cmdq[i], ocl.acc_distances[i],
 			      CL_FALSE, 0,
@@ -1066,6 +1065,8 @@ void* adaptive_dbscan_thread(void* arg) {
   dataset ds = th->ds;
   float epsilon;
   int index;
+
+  split_set current_split_set;
   
   while(1) {
 
@@ -1077,23 +1078,30 @@ void* adaptive_dbscan_thread(void* arg) {
     
     epsilon = th->epsilon_now[0];
     th->epsilon_now[0] = th->epsilon_now[0] + th->epsilon_inc;
+  
+    pthread_mutex_unlock(th->lock_eps);
+
+    current_split_set.n_clusters = 0;
+    current_split_set.clusters = NULL;
+    
+#if defined(_SCAN_SMITH_WATERMAN_GPU)
+    current_split_set = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
+#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
+    current_split_set = th->dbscanner(ds, epsilon, th->minpts, th->ocl,
+					     th->mpi_rank, th->mpi_size);
+#else
+    current_split_set = th->dbscanner(ds, epsilon, th->minpts);
+#endif
+
+    pthread_mutex_lock(th->lock_split_sets);
     index = th->split_set_index[0];
     th->split_set_index[0]++;
     th->split_sets[0] =
       (split_set*)realloc(th->split_sets[0],
-			   sizeof(split_set)*th->split_set_index[0]);
+			  sizeof(split_set)*th->split_set_index[0]);
+    th->split_sets[0][index] = current_split_set;
+    pthread_mutex_unlock(th->lock_split_sets);
     
-    pthread_mutex_unlock(th->lock_eps);
-
-#if defined(_SCAN_SMITH_WATERMAN_GPU)
-    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl);
-#elif defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
-    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts, th->ocl,
-					     th->mpi_rank, th->mpi_size);
-#else
-    th->split_sets[0][index] = th->dbscanner(ds, epsilon, th->minpts);
-#endif
-
     if(th->split_sets[0][index].n_clusters == 1) {
       pthread_mutex_lock(th->lock_stop);
       th->stopindex[0] = index;
@@ -1156,6 +1164,8 @@ void adaptive_dbscan(
   pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t)*n_threads);
   pthread_mutex_t* lock_eps = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   pthread_mutex_t* lock_stop =
+    (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_t* lock_split_sets =
     (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
   int * stop = (int*)malloc(sizeof(int));
 
@@ -1240,7 +1250,8 @@ void adaptive_dbscan(
 
   pthread_mutex_init(lock_stop,NULL);
   pthread_mutex_init(lock_eps,NULL);
-
+  pthread_mutex_init(lock_split_sets,NULL);
+  
   stop[0] = 0;
   
 #if defined(_SCAN_SMITH_WATERMAN_GPU) || defined(_SCAN_SMITH_WATERMAN_MPI_GPU)
@@ -1260,6 +1271,7 @@ void adaptive_dbscan(
   th[0].split_set_index[0] = 1;
   th[0].lock_stop = lock_stop;
   th[0].lock_eps = lock_eps;
+  th[0].lock_split_sets = lock_split_sets;
   th[0].stop = stop;
   th[0].split_sets = (split_set**)malloc(sizeof(split_set*));
   th[0].split_sets[0] = (split_set*)malloc(sizeof(split_set));
@@ -1270,10 +1282,11 @@ void adaptive_dbscan(
   signal(SIGTERM,adaptive_got_killed);
 #endif
   memcpy(th[0].split_sets[0],set_of_split_sets,sizeof(split_set));
-					    
+
   th[0].stopindex = (int*)malloc(sizeof(int));
   th[0].stopindex[0];
 
+  
   for(i=1;i<n_threads;i++) {
     memcpy(th+i,th,sizeof(thread_handler_adaptive_scan));
   }

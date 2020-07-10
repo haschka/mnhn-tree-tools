@@ -424,7 +424,6 @@ dataset load_kmer_from_file_into_dataset(FILE* in_file, data_shape shape) {
   return(ds);
 }
 
-
 void load_projections_from_file_into_dataset(FILE* projections,
 					     size_t dimensions,
 					     dataset* ds) {
@@ -445,7 +444,7 @@ void load_projections_from_file_into_dataset(FILE* projections,
 #elif defined(__SSE__)
 			   16,
 #endif
-			   sizeof(float)*(ds->n_values))) {
+			   sizeof(float)*(ds->n_values+(8-(ds->n_values%8))))) {
       printf("Could not allocate memory to load projections \n");
       _exit(1);
     }
