@@ -170,5 +170,16 @@ void write_unique_sequences(FILE* outfile, dataset ds, unique_sequences us);
  */
 void dataset_to_fasta(FILE* outfile, dataset ds);
 
+/*! \brief Reverses sequences in a dataset using a binary mask
+ *  \param ds a dataset containing sequences that will be manipulated
+ *  \param binary_mask a binary array containing 1 where sequences
+ *                     shall be reversed
+ */
 void reverse_sequences(dataset *ds, char* binary_mask);
+
+/*! \brief Reverse complements sequences in a dataset using a binary mask
+ *  \param ds a dataset containing sequences that will be manipulated
+ *  \param binary_mask a binary array containing 1 where sequences
+ *                     shall be translated into their reverse complement
+ */
 void reverse_complement_sequences(dataset* ds, char* binary_mask);
