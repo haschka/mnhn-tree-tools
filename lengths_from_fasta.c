@@ -13,32 +13,30 @@ void file_error(char* path) {
 void print_arguments() {
 
   printf("Arguments are: \n"
-	 "   [file] FASTA file to obtain unique sequences from \n");
+	 "   [file] FASTA file to obtain sequence lengths from \n");
 }
-
 
 int main(int argc, char** argv) {
 
   dataset ds;
 
-  FILE* input = fopen(argv[1],"r");
-
-  unique_sequences us;
+  int i;
+  
+  FILE* f = fopen(argv[1],"r");
 
   if (argc < 2) {
     print_arguments();
     return(1);
   }
+ 
+  if ( NULL == f ) file_error(argv[1]);
   
-  if (input == NULL) file_error(argv[1]);
+  ds = dataset_from_fasta(f);
   
-  ds = dataset_from_fasta(input);
-
-  us = get_sequence_multiplicities(ds);
-  sort_unique_sequences(us);
-  write_unique_sequences(stdout, ds, us);
-
-  fclose(input);
+  for(i=0;i<ds.n_values;i++) {
+    printf("%llu\n",(long long unsigned int)ds.sequence_lengths[i]);
+  }
   
+  free_sequences_from_dataset(ds);
+  return(0);
 }
-  

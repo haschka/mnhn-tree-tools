@@ -1,4 +1,4 @@
-CC=clang
+CC=gcc
 MPICC=mpicc
 #CFLAGS=-g
 #CFLAGS=-g -march=native -fsanitize=address 
@@ -15,9 +15,9 @@ SDL=$(shell sdl2-config --cflags) $(shell sdl2-config --libs)
 
 all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      cluster_dbscan_kmerL2 cluster_dbscan_SW cluster_dbscan_SW_GPU \
-     compareSW silhouette compare_norms consens sequence_multiplicity \
-     adaptive_clustering_SW \
-     adaptive_clustering_SW_GPU adaptive_clustering_PCA \
+     compareSW silhouette consens sequence_multiplicity lengths_from_fasta \
+     adaptive_clustering_SW adaptive_clustering_SW_GPU adaptive_clustering_PCA \
+     compare_norms \
      adaptive_clustering_kmer_L1 adaptive_clustering_kmer_L2 \
      adaptive_clustering_SW_MPI_GPU \
      split_set_to_fasta print_connections \
@@ -335,6 +335,11 @@ consens: consens.c dataset.h dataset.o binary_array.o
 sequence_multiplicity: sequence_multiplicity.c dataset.h binary_array.o \
                        dataset.o
 	$(CC) $(CFLAGS) sequence_multiplicity.c -o ./bin/sequence_multiplicity \
+ binary_array.o dataset.o $(MATH)
+
+lengths_from_fasta: lengths_from_fasta.c dataset.h binary_array.o \
+                    dataset.o
+	$(CC) $(CFLAGS) lengths_from_fasta.c -o ./bin/lengths_from_fasta \
  binary_array.o dataset.o $(MATH)
 
 clean:

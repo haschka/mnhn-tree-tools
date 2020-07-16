@@ -13,6 +13,11 @@ int main(int argc, char** argv) {
   
   FILE* in = fopen(argv[1],"r");
 
+  if(in == NULL) {
+    printf("Could not open fasta file %s", argv[1]);
+    return(1);
+  }
+  
   if(argc < 3) {
     printf("Arguments are: \n"
 	   "  [file] fasta file \n"

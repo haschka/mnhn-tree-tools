@@ -234,6 +234,72 @@ void print_tree(FILE*f, tree_node* root) {
   fprintf(f,";");
 }
 
+double pureness_helper(int layer, int this_cluster,
+		       long long int* inpures,
+		       split_set *s, split_set target) {
+
+  int i;
+  
+  cluster current_cluster = s[layer].clusters[this_cluster];
+  cluster intersection;
+
+  double inpureness = 0;
+
+  int c;
+  
+  for(i = 0; i < target.n_clusters; i++) {
+    intersection =
+      intersection_of_clusters(current_cluster, target.clusters[i]);
+    if(current_cluster.n_members != intersection.n_members) {
+      inpures[layer]++;
+      if ( intersection.n_members > current_cluster.n_members/2 ) {
+	c = current_cluster.n_members - intersection.n_members;
+      } else {
+	c = intersection.n_members;
+      }
+      inpureness+=(double)c/((double)current_cluster.n_members-(double)c);
+    }
+  }
+  return(inpureness);
+}
+  
+void pureness_worker(double* pureness, long long int * inpures,
+		     tree_node* root, split_set *s,
+		     split_set target) {
+  tree_node* n;
+  int layer, this_cluster, members;
+  if(root->child!=NULL) {
+    for(n=root->child;n!=NULL;n=n->neighbor) {
+      pureness_worker(pureness,inpures,n,s,target);
+    }
+  }
+  sscanf(root->id,"L%iC%iN%i", &layer, &this_cluster, &members);
+  pureness[layer] += pureness_helper(layer, this_cluster, inpures, s, target);
+}
+  
+double* pureness_from_tree(int n_layers, tree_node* root,
+			   split_set *s, split_set target) {
+
+  double *pureness = (double*)malloc(sizeof(double)*n_layers);
+  long long int* inpures = (long long*)malloc(sizeof(long long int)*n_layers);
+
+  int i;
+  
+  memset(pureness,0,sizeof(double)*n_layers);
+  memset(inpures,0,sizeof(long long int)*n_layers);
+  
+  pureness_worker(pureness, inpures, root, s, target);
+  
+  for(i = 0 ; i < n_layers ; i++) {
+    pureness[i] =
+      pureness[i]/(double)inpures[i]
+      + ((double)(abs(s[i].n_clusters-target.n_clusters)))
+      / (double)(target.n_clusters);
+  }
+  free(inpures);
+  return(pureness);
+}
+
 void create_single_cluster_file_with_values(char* filename, cluster cl,
 					    dataset ds) {
   int j, k;

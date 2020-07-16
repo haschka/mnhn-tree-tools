@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 	   "  [fasta] database of sequences the split sets are refering to\n"
 	   "  [string] color CSS compatible i.e. red, green, blue, #1122FF\n"
 	   "  [split_sets...] cluster files corresponding to newick tree\n");
+    return(1);
   }
   
   if ( NULL == (fasta_s = fopen(argv[1], "r"))) file_error(argv[1]);
