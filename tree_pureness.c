@@ -12,6 +12,8 @@ void file_error(char* path) {
 
 int main(int argc, char** argv) {
 
+  int i;
+  
   FILE* fasta_f;
 
   dataset ds;
@@ -22,13 +24,14 @@ int main(int argc, char** argv) {
   split_set *s;
 
   int clusters_offset = 3;
-  int n_sets = argc - cluster_offsets;
+  int n_sets = argc - clusters_offset;
 
   cluster_connections** connections =
     (cluster_connections**)malloc(sizeof(cluster_connections*)*argc);
 
   tree_node* root;
   double* purness;
+  double* cluster_factors;
   
   if (argc < 4) {
     printf("Arguments are: \n"
@@ -42,7 +45,7 @@ int main(int argc, char** argv) {
   ds = dataset_from_fasta(fasta_f);
   fclose(fasta_f);
 
-  s = (split_set*)malloc(sizeof(split_set)*tree_split_sets);
+  s = (split_set*)malloc(sizeof(split_set)*n_sets);
 
   for(i=clusters_offset;i<argc;i++) {
     s[i-clusters_offset] = read_split_set(argv[i]);
@@ -57,8 +60,9 @@ int main(int argc, char** argv) {
   root = generate_tree(n_sets, connections, s, NULL);
 
   purness = pureness_from_tree(n_sets, root, s, target);
-
+  cluster_factors = clusters_in_layer_vs_target_clusters(n_sets, s, target);
+  
   for(i=0;i<n_sets;i++) {
-    printf("%lf\n",purness[i]);
+    printf("%lf\t%lf\n",purness[i],cluster_factors[i]);
   }
 }

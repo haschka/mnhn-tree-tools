@@ -267,13 +267,13 @@ void pureness_worker(double* pureness, long long int * inpures,
 		     tree_node* root, split_set *s,
 		     split_set target) {
   tree_node* n;
-  int layer, this_cluster, members;
+  int layer, this_cluster;
   if(root->child!=NULL) {
     for(n=root->child;n!=NULL;n=n->neighbor) {
       pureness_worker(pureness,inpures,n,s,target);
     }
   }
-  sscanf(root->id,"L%iC%iN%i", &layer, &this_cluster, &members);
+  sscanf(root->id,"L%iC%i", &layer, &this_cluster);
   pureness[layer] += pureness_helper(layer, this_cluster, inpures, s, target);
 }
   
@@ -292,12 +292,23 @@ double* pureness_from_tree(int n_layers, tree_node* root,
   
   for(i = 0 ; i < n_layers ; i++) {
     pureness[i] =
-      pureness[i]/(double)inpures[i]
-      + ((double)(abs(s[i].n_clusters-target.n_clusters)))
-      / (double)(target.n_clusters);
+      pureness[i]/(double)inpures[i];
   }
   free(inpures);
   return(pureness);
+}
+
+double* clusters_in_layer_vs_target_clusters(int n_layers, split_set *s,
+					     split_set target) {
+
+  int i;
+  double *cluster_factors = (double*)malloc(sizeof(double)*n_layers);
+
+  for(i = 0 ; i < n_layers ; i++) {
+    cluster_factors[i] = ((double)(abs(s[i].n_clusters-target.n_clusters)))
+      / (double)(target.n_clusters);
+  }
+  return(cluster_factors);
 }
 
 void create_single_cluster_file_with_values(char* filename, cluster cl,
