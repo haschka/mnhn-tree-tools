@@ -235,7 +235,7 @@ void print_tree(FILE*f, tree_node* root) {
 }
 
 double pureness_helper(int layer, int this_cluster,
-		       long long int* inpures,
+		       int* inpures,
 		       split_set *s, split_set target) {
 
   int i;
@@ -246,24 +246,27 @@ double pureness_helper(int layer, int this_cluster,
   double inpureness = 0;
 
   int c;
+  int inpure = 0;
   
   for(i = 0; i < target.n_clusters; i++) {
     intersection =
       intersection_of_clusters(current_cluster, target.clusters[i]);
+    free(intersection.members);
     if(current_cluster.n_members != intersection.n_members) {
-      inpures[layer]++;
+      inpure = 1;
       if ( intersection.n_members > current_cluster.n_members/2 ) {
 	c = current_cluster.n_members - intersection.n_members;
       } else {
 	c = intersection.n_members;
       }
-      inpureness+=(double)c/((double)current_cluster.n_members-(double)c);
+      inpureness+=(2.*(double)c)/((double)current_cluster.n_members);
     }
   }
+  inpures[layer]+=inpure;
   return(inpureness);
 }
   
-void pureness_worker(double* pureness, long long int * inpures,
+void pureness_worker(double* pureness,int * inpures,
 		     tree_node* root, split_set *s,
 		     split_set target) {
   tree_node* n;
@@ -277,13 +280,18 @@ void pureness_worker(double* pureness, long long int * inpures,
   pureness[layer] += pureness_helper(layer, this_cluster, inpures, s, target);
 }
   
-double* pureness_from_tree(int n_layers, tree_node* root,
-			   split_set *s, split_set target) {
+int pureness_from_tree(int n_layers, tree_node* root,
+		       split_set *s, split_set target,
+		       double** pureness_values, int** inpure_clusters) {
 
   double *pureness = (double*)malloc(sizeof(double)*n_layers);
-  long long int* inpures = (long long*)malloc(sizeof(long long int)*n_layers);
+  int* inpures = (int*)malloc(sizeof(int)*n_layers);
 
   int i;
+
+  if (pureness == NULL || inpures == NULL) {
+    return (1);
+  }
   
   memset(pureness,0,sizeof(double)*n_layers);
   memset(inpures,0,sizeof(long long int)*n_layers);
@@ -294,10 +302,24 @@ double* pureness_from_tree(int n_layers, tree_node* root,
     pureness[i] =
       pureness[i]/(double)inpures[i];
   }
-  free(inpures);
-  return(pureness);
+
+  pureness_values[0] = pureness;
+  inpure_clusters[0] = inpures;
+  
+  return(0);
 }
 
+double* inpures_over_total_fraction(int n_layers, split_set *s,
+				    int* inpure_clusters) {
+
+  int i;
+  double* fraction = (double*)malloc(sizeof(double)*n_layers);
+  for(i = 0 ; i < n_layers ; i++) {
+    fraction[i] = (double)(inpure_clusters[i])/(double)(s[i].n_clusters);
+  }
+  return(fraction);
+}
+  
 double* clusters_in_layer_vs_target_clusters(int n_layers, split_set *s,
 					     split_set target) {
 
@@ -413,6 +435,7 @@ generate_split_set_relation(split_set ancient, split_set new) {
   }
   return(connections_ancient_to_new);
 }
+
 
 cluster intersection_of_clusters(cluster a, cluster b) {
 

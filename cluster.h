@@ -217,7 +217,15 @@ cluster cluster_from_sequence_in_dataset(dataset ds,
 
 
 double* array_deltas(double* array, int array_length);
-double* pureness_from_tree(int n_layers, tree_node* root,
-			   split_set *s, split_set target);
+int pureness_from_tree(int n_layers, tree_node* root,
+		       split_set *s, split_set target,
+		       double** pureness_values, int** inpure_clusters);
+
+double* clusters_in_layer_vs_target_clusters(int n_layers, split_set *s,
+					     split_set target);
+
+double* inpures_over_total_fraction(int n_layers, split_set *s,
+				    int* inpure_clusters);
+  
 double* clusters_in_layer_vs_target_clusters(int n_layers, split_set *s,
 					     split_set target);

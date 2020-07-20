@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
   tree_node* root;
   double* purness;
   double* cluster_factors;
+  double* fraction;
+  int * inpure_clusters;
   
   if (argc < 4) {
     printf("Arguments are: \n"
@@ -59,10 +61,12 @@ int main(int argc, char** argv) {
 
   root = generate_tree(n_sets, connections, s, NULL);
 
-  purness = pureness_from_tree(n_sets, root, s, target);
+  pureness_from_tree(n_sets, root, s, target, &purness, &inpure_clusters);
   cluster_factors = clusters_in_layer_vs_target_clusters(n_sets, s, target);
+
+  fraction = inpures_over_total_fraction(n_sets, s, inpure_clusters);
   
   for(i=0;i<n_sets;i++) {
-    printf("%lf\t%lf\n",purness[i],cluster_factors[i]);
+    printf("%lf\t%lf\n%lf",purness[i],cluster_factors[i],fraction[i]);
   }
 }
