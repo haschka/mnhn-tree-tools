@@ -249,17 +249,20 @@ double pureness_helper(int layer, int this_cluster,
   int inpure = 0;
   
   for(i = 0; i < target.n_clusters; i++) {
+
     intersection =
       intersection_of_clusters(current_cluster, target.clusters[i]);
-    free(intersection.members);
-    if(current_cluster.n_members != intersection.n_members) {
+    if (intersection.members != NULL) free(intersection.members);
+    
+    if(current_cluster.n_members != intersection.n_members &&
+       intersection.n_members != 0) {
       inpure = 1;
       if ( intersection.n_members > current_cluster.n_members/2 ) {
 	c = current_cluster.n_members - intersection.n_members;
       } else {
 	c = intersection.n_members;
       }
-      inpureness+=(2.*(double)c)/((double)current_cluster.n_members);
+      inpureness+=((double)c)/((double)current_cluster.n_members);
     }
   }
   inpures[layer]+=inpure;
@@ -294,13 +297,17 @@ int pureness_from_tree(int n_layers, tree_node* root,
   }
   
   memset(pureness,0,sizeof(double)*n_layers);
-  memset(inpures,0,sizeof(long long int)*n_layers);
+  memset(inpures,0,sizeof(int)*n_layers);
   
   pureness_worker(pureness, inpures, root, s, target);
   
   for(i = 0 ; i < n_layers ; i++) {
-    pureness[i] =
-      pureness[i]/(double)inpures[i];
+    if(inpures[i] > 0) {
+      pureness[i] =
+	pureness[i]/(double)inpures[i];
+    } else {
+      pureness[i] = 0;
+    }
   }
 
   pureness_values[0] = pureness;
@@ -488,7 +495,8 @@ cluster intersection_of_clusters(cluster a, cluster b) {
   }
   intersection.n_members = count;
   intersection.id = -1;
-  intersection.members = (int*)realloc(intersection.members, sizeof(int)*count);
+  intersection.members =
+    (int*)realloc(intersection.members, sizeof(int)*count);
 
   return(intersection);
 }

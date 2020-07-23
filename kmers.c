@@ -70,6 +70,15 @@ size_t number_of_kmers_from_length (size_t kmer_length) {
   return (n_kmer);
 }
 
+size_t number_of_protein_kmers_from_length(size_t protein_kmer_length) {
+  int i;
+  size_t n_kmer = 20;
+  for(i = 0; i < protein_kmer_length-1; i++) {
+    n_kmer *= 20;
+  }
+  return (n_kmer);
+}
+
 char** gen_dna_kmers(size_t kmer_length) {
 
   unsigned long i;
@@ -90,6 +99,54 @@ char** gen_dna_kmers(size_t kmer_length) {
     kmers[i] = gen_dna_string_from_binary(kmer_length, i);
   }
   kmers[0] = gen_dna_string_from_binary(kmer_length, 0);
+  return(kmers);
+}
+
+void recursive_protein_kmer_generator(char** kmers,
+				      size_t length, size_t level,
+				      char* kmer_template,
+				      char* lookup_table,
+				      int* global_counter) {
+  int i;
+  if (level < length) {
+    level++;
+    for(i=0;i<20;i++) {
+      kmer_template[level-1] = lookup_table[i];
+      recursive_protein_kmer_generator(kmers, length, level,
+				       kmer_template,lookup_table,
+				       global_counter);
+    }
+    level--;
+  } else {
+    kmer_template[level] = lookup_table[i];
+    kmers[global_counter[0]] = (char*)malloc(sizeof(char)*length);
+    memcpy(kmers[global_counter[0]], kmer_template, sizeof(char)*length);
+    global_counter[0]++;
+  }
+}	
+      
+char** gen_protein_kmers(size_t protein_kmer_length) {
+
+  char lookup_table[20] = {'A','C','D','E','F',
+			   'G','H','I','K','L',
+			   'M','N','P','Q','R',
+			   'S','T','V','W','Y'};
+
+  char* kmer_template = (char*)malloc(sizeof(char)*protein_kmer_length);
+
+  int global_counter = 0;
+  
+  char** kmers =
+    (char**)malloc(sizeof(char*)
+		   *number_of_protein_kmers_from_length(protein_kmer_length));
+  
+  recursive_protein_kmer_generator(kmers,
+				   protein_kmer_length,
+				   0,
+				   kmer_template,
+				   lookup_table,
+				   &global_counter);
+
   return(kmers);
 }
 
@@ -124,11 +181,15 @@ short int frequence_of_kmer_in_sequence(char* kmer, char* sequence,
   return (matches);
 }
 
-void free_kmers(char** kmers, size_t kmer_length) {
+void free_kmers(char** kmers, size_t kmer_length, int protein) {
 
-  int i;
-  int n = number_of_kmers_from_length(kmer_length);
-
+  size_t i;
+  size_t n;
+  if(protein) {
+    n = number_of_protein_kmers_from_length(kmer_length);
+  } else {
+    n = number_of_kmers_from_length(kmer_length);
+  }
   for(i=0;i<n;i++) {
     free(kmers[i]);
   }
@@ -166,21 +227,26 @@ void* frequencies_from_dataset_thread_handler(void* arg) {
 }
 
 kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
-					  int n_threads) {
+					  int n_threads, int protein) {
 
   int i,j;
 
   kmer_frequencies freq;
 
-  char** kmers = gen_dna_kmers(kmer_length);
-
+  char** kmers;
   char*** kmers_t;
   
   thread_handle* th = (thread_handle*)malloc(sizeof(thread_handle)*n_threads);
   pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t)*n_threads);
   size_t stride;
-  
-  freq.n_kmers = number_of_kmers_from_length(kmer_length);
+
+  if(protein) {
+    kmers = gen_protein_kmers(kmer_length);
+    freq.n_kmers = number_of_protein_kmers_from_length(kmer_length);
+  } else {
+    kmers = gen_dna_kmers(kmer_length);
+    freq.n_kmers = number_of_kmers_from_length(kmer_length);
+  }
   freq.n_seq = ds.n_values;
   
   freq.frequencies = (short int**)malloc(sizeof(short int*)*freq.n_seq);
@@ -196,8 +262,12 @@ kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
     kmers_t = (char***)malloc(sizeof(char**)*n_threads);
   
     for(i=0;i<n_threads;i++) {
-      
-      kmers_t[i] = gen_dna_kmers(kmer_length);
+
+      if(protein) {
+	kmers_t[i] = gen_protein_kmers(kmer_length);
+      } else {
+	kmers_t[i] = gen_dna_kmers(kmer_length);
+      }
       
       th[i].freq = &freq;
       th[i].kmers = kmers_t[i];
@@ -214,7 +284,7 @@ kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
 
     for(i=0;i<n_threads;i++) {
       pthread_join(threads[i], NULL);
-      free_kmers(kmers_t[i],kmer_length);
+      free_kmers(kmers_t[i],kmer_length,protein);
       pthread_mutex_destroy(&lock);
     }
 
@@ -239,7 +309,7 @@ kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
     }
   }
   
-  free_kmers(kmers,kmer_length);
+  free_kmers(kmers,kmer_length,protein);
   free(th);
   free(threads);
   
@@ -320,7 +390,7 @@ dataset generate_n_permutations_for_sequence(dataset ds, size_t index) {
     }
     return_set.sequence_lengths[i] = length;
   }
-  free_kmers(kmers,N_count);
+  free_kmers(kmers,N_count,0);
 
   return_set.sequences = sequences;
   return_set.max_sequence_length = length;

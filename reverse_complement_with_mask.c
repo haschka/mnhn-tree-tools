@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
       printf("Mask file currupt!\n");
       return(1);
     }
-    if(mask_f) {
+    if(i_buffer == 1) {
       set_value_in_binary_array_at_index(binary_mask,i);
     }
   }

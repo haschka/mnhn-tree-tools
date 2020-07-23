@@ -67,6 +67,6 @@ int main(int argc, char** argv) {
   fraction = inpures_over_total_fraction(n_sets, s, inpure_clusters);
   
   for(i=0;i<n_sets;i++) {
-    printf("%lf\t%lf\n%lf",purness[i],cluster_factors[i],fraction[i]);
+    printf("%lf\t%lf\t%lf\n",purness[i],cluster_factors[i],fraction[i]);
   }
 }

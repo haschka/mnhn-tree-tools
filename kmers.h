@@ -26,12 +26,16 @@ typedef struct {
  */
 size_t number_of_kmers_from_length(size_t kmer_length);
 
+size_t number_of_protein_kmers_from_length(size_t protein_kmer_length);
+
 /*! \brief a function that generates all possible kmers for a given length.
  *         Warning this function only works for k_mer lenghts up to 16.
  *  \param kmer_length the length of the k_mers to be obtained
  *  \return DNA strings of the k_mers
  */
 char** gen_dna_kmers(size_t kmer_length);
+
+char** gen_protein_kmers(size_t protein_kmer_length);
 
 /*! \brief a function that returns the frequency for a given kmer in a 
  *         given sequence.
@@ -47,9 +51,9 @@ short int frequence_of_kmer_in_sequence(char* kmer, char* sequence,
  *  \param kmers a pointer to the k_mers in question
  *  \param kmer_length the length of the k_mers in question
  */
-void free_kmers(char** kmers, size_t kmer_length);
+void free_kmers(char** kmers, size_t kmer_length, int protein);
 
-void* frequencies_from_dataset_thread_handler(void* arg);
+//void* frequencies_from_dataset_thread_handler(void* arg);
 
 /*! \brief Allows you to obtain the frequencies of k_mers occuring in 
  *         sequences accross a dataset.
@@ -63,7 +67,7 @@ void* frequencies_from_dataset_thread_handler(void* arg);
  *  \param n_threads the number of threads to use for this run
  */
 kmer_frequencies frequencies_from_dataset(dataset ds, size_t kmer_length,
-					  int n_threads);
+					  int n_threads, int protein);
 
 /*! \brief Write kmer_frequencies out to a file. 
  *  This function allows you to write the frequencies obtained for instance
