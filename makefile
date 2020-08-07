@@ -29,6 +29,7 @@ all: fasta2kmer kmer2pca cluster_dbscan_pca cluster_dbscan_kmerL1 \
      pca2densitymap pca2densityfile \
      reverse_with_mask reverse_complement_with_mask \
      find_closest_sequence_SW split_set_from_annotation \
+     split_set_from_swarm \
      pca_visual_extract digest_XbaI digest_XmnI digest_HindIII \
      find_satellite replace_N_sequence
 
@@ -156,6 +157,13 @@ split_set_from_annotation: split_set_from_annotation.c dataset.h \
                            cluster_io.o volumes.o volumes.h
 	$(CC) $(CFLAGS) split_set_from_annotation.c \
  -o ./bin/split_set_from_annotation dataset.o binary_array.o cluster_io.o \
+ volumes.o $(MATH)
+
+split_set_from_swarm: split_set_from_swarm.c dataset.h \
+                      binary_array.h cluster.h dataset.o \
+                      cluster_io.o binary_array.o volumes.o volumes.h
+	$(CC) $(CFLAGS) split_set_from_swarm.c \
+ -o ./bin/split_set_from_swarm dataset.o binary_array.o cluster_io.o \
  volumes.o $(MATH)
 
 split_set_to_projections: split_set_to_projections.c dataset.h \

@@ -443,7 +443,6 @@ generate_split_set_relation(split_set ancient, split_set new) {
   return(connections_ancient_to_new);
 }
 
-
 cluster intersection_of_clusters(cluster a, cluster b) {
 
   cluster big;
