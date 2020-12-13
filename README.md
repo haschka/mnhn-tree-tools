@@ -4,7 +4,23 @@
   instruction as well as a tutorial available at
   https://gitlab.in2p3.fr/mnhn-tools/mnhn-tree-tools-manual/-/blob/master/manual.pdf
 
-# How to build
+# How to build (debain 10 with standard non optimzed libraries)
+```
+sudo apt-get install git build-essential libpng-dev libsdl2-dev liblapack-dev libopenmpi-dev libpocl-dev ocl-icd-opencl-dev pocl-opencl-icd
+
+git clone https://gitlab.in2p3.fr/mnhn-tools/mnhn-tree-tools.git
+
+cd mnhn-tree-tools
+mkdir bin
+make all
+cd bin
+
+# make MNHN-TREE-TOOLS available from any folder ( this is temporary, you
+# may modify your .bashrc and similar files to make this permanent
+export PATH=$PATH:$PWD
+```
+
+# How to build (generic and optimized)
 
 * create a bin subdirectory: i.e. by typing `mkdir bin`
 
