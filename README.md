@@ -4,7 +4,7 @@
   instruction as well as a tutorial available at
   https://gitlab.in2p3.fr/mnhn-tools/mnhn-tree-tools-manual/-/blob/master/manual.pdf
 
-# How to build (debain 10 with standard non optimzed libraries)
+# How to build (Debain 10 / Ubuntu 20.04  with standard non optimzed libraries)
 ```
 sudo apt-get install git build-essential libpng-dev libsdl2-dev liblapack-dev libopenmpi-dev libpocl-dev ocl-icd-opencl-dev pocl-opencl-icd
 
