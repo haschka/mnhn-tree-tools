@@ -11,6 +11,8 @@
 
 #include <immintrin.h>
 
+void dsyev_(char*, char*, int*, double*, int*, double*, double*, int*, int*);
+
 typedef struct {
   size_t n_features;
   size_t n_samples;
@@ -116,7 +118,7 @@ eigen_space eigen_from_corr(double* corr, data_shape s) {
   
   LWORK = 3*N;
   WORK = (double*)malloc(sizeof(double)*LWORK);
-  
+
   dsyev_(&JOBZ, &ULPO, &N, A, &LDA, W, WORK, &LWORK, &INFO);
 
   /*  if (INFO) {
