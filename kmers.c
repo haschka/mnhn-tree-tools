@@ -8,6 +8,10 @@
 #include"dataset.h"
 #include"kmers.h"
 
+#ifdef __SSE2__
+#include<emmintrin.h>
+#endif
+
 typedef struct {
   kmer_frequencies* freq;
   char** kmers;
@@ -164,7 +168,59 @@ short int frequence_of_kmer_in_sequence(char* kmer, char* sequence,
   if ( kmer_length > sequence_length) return 0;
 
   comparisions = sequence_length-kmer_length;
+  
+#ifdef __SSE2__ 
+  int v_comparisons = sequence_length - 16;
+  unsigned char kmer_c_vector[16] __attribute__((aligned(16)));
+  unsigned char kmer_c_mask[16] __attribute__((aligned(16)));
 
+  __m128i kmer_vector;
+  __m128i kmer_mask;
+  __m128i current_sequence;
+  __m128i comparison_result;
+  int magic_return;
+  int win = 65535; /* 2^16-1 */
+
+  if ( (v_comparisons < 0) || (kmer_length > 16) ) {
+    v_comparisons = 0;
+  } else {
+    for(i = 0; i<kmer_length;i++) {
+      kmer_c_vector[i] = kmer[i];
+      kmer_c_mask[i] = 255;
+    }
+    for(i= kmer_length ; i<16;i++) {
+      kmer_c_vector[i] = 0;
+      kmer_c_mask[i] = 0;
+    }
+    
+    kmer_vector = _mm_load_si128(kmer_c_vector);
+    kmer_mask = _mm_load_si128(kmer_c_mask);
+    
+    for(i=0; i<v_comparisons;i++) {
+      current_sequence = _mm_loadu_si128((sequence+i));
+      current_sequence = _mm_and_si128(current_sequence,kmer_mask);
+      comparison_result = _mm_cmpeq_epi8(current_sequence,kmer_vector);
+      magic_return = _mm_movemask_epi8(comparison_result);
+      matches += (win == magic_return);
+    }
+  }
+  /* handle not vectorizeable tail */
+  for(i = v_comparisons; i<comparisions; i++) {
+    control = 0;
+    for(j = 0; j<kmer_length; j++) {
+      if ( kmer[j] != sequence[j+i] ) {
+	control = 1;
+	goto out_of_inner_for;
+      }
+    }
+  out_of_inner_for:
+    if(control == 0) {
+      matches++;
+    }
+  }
+  
+#else
+  
   for(i = 0; i<comparisions; i++) {
     control = 0;
     for(j = 0; j<kmer_length; j++) {
@@ -178,6 +234,9 @@ short int frequence_of_kmer_in_sequence(char* kmer, char* sequence,
       matches++;
     }
   }
+  
+#endif
+   
   return (matches);
 }
 
