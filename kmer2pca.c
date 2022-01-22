@@ -9,7 +9,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#ifdef __AVX__
+
 #include <immintrin.h>
+
+#endif
 
 void dsyev_(char*, char*, int*, double*, int*, double*, double*, int*, int*);
 
@@ -342,6 +346,8 @@ void* feature_covariance_matrix_thread_handler(void* handle) {
   th->incrementor[0]++;
   pthread_mutex_unlock(&lock);
 
+#ifdef __AVX__
+  
   __m256d c = _mm256_set1_pd(0.);
   __m256d y;
   __m256d t;
@@ -358,14 +364,29 @@ void* feature_covariance_matrix_thread_handler(void* handle) {
   double data_j[4] __attribute__((aligned(32)));
 
   double sum_buffer[4] __attribute__((aligned(32)));
-				
+
+#else
+  
+  double c;
+  double y;
+  double t;
+
+#endif
+  
   if(i<n_features) {
+
+#ifdef __AVX__
     
     means_i_v = _mm256_set1_pd(means[i]);    
 
+#endif
+    
     for(j = 0; j <= i; j++) {
 
       sum = 0;
+
+#ifdef __AVX__
+      
       c = _mm256_set1_pd(0.);
       sum_v = _mm256_set1_pd(0.);
       
@@ -413,6 +434,18 @@ void* feature_covariance_matrix_thread_handler(void* handle) {
 	    (data[k*n_features+j]-means[j])*(data[k*n_features+i]-means[i]);
 	}
       }
+
+#else
+      c = 0.0;
+      for(k = 0;k< n_samples;k++) {
+	y = (data[k*n_features+j]-means[j])*(data[k*n_features+i]-means[i]);
+	y = y - c;
+	t = sum + y;
+	c = ( t - sum ) - y;
+	sum = t;
+      }
+      
+#endif
       c_matrix[i*n_features+j] = c_matrix[j*n_features+i] = sum/n_samples;
     }
     goto thread_continuition; 
