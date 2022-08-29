@@ -347,8 +347,11 @@ int main(int argc, char** argv) {
     }
 
     if (mouse_down) {
+      /*
       x = event.motion.x;
       y = event.motion.y;
+      */
+      SDL_GetMouseState(&x,&y);
       if(position_in_image(width,height,x,y)) {
 
 	SDL_LockTexture(image_texture,NULL,(void**)&image_frame, &pitch);
