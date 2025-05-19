@@ -17,7 +17,7 @@ void file_error(char* path) {
 
 union pixel {
   unsigned int i;
-  char c[4];
+  unsigned char c[4];
 };
 
 int pos_check_start_x_lt_endx_start_y_lt_endy(int pos_x, int pos_y,

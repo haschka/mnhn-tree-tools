@@ -99,17 +99,17 @@ cluster_color map_input_string_to_cluster_color(char* in, int max_clusters) {
 
   /* red */
   for(i=1;i<3;i++) color_conversion_buffer[i-1] = colorbuffer[i];
-  color_conversion_buffer[3] = 0;
+  color_conversion_buffer[2] = 0;
   ret_val.r = strtol(color_conversion_buffer,NULL, 16);
 
   /* green */
   for(i=3;i<5;i++) color_conversion_buffer[i-3] = colorbuffer[i];
-  color_conversion_buffer[3] = 0;
+  color_conversion_buffer[2] = 0;
   ret_val.g = strtol(color_conversion_buffer,NULL, 16);
 
   /* blue */
   for(i=5;i<7;i++) color_conversion_buffer[i-5] = colorbuffer[i];
-  color_conversion_buffer[3] = 0;
+  color_conversion_buffer[2] = 0;
   ret_val.b = strtol(color_conversion_buffer,NULL, 16);
 
   return(ret_val);
