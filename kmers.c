@@ -193,11 +193,11 @@ short int frequence_of_kmer_in_sequence(char* kmer, char* sequence,
       kmer_c_mask[i] = 0;
     }
     
-    kmer_vector = _mm_load_si128(kmer_c_vector);
-    kmer_mask = _mm_load_si128(kmer_c_mask);
+    kmer_vector = _mm_load_si128((__m128i const*)kmer_c_vector);
+    kmer_mask = _mm_load_si128((__m128i const*)kmer_c_mask);
     
     for(i=0; i<v_comparisons;i++) {
-      current_sequence = _mm_loadu_si128((sequence+i));
+      current_sequence = _mm_loadu_si128((__m128i const*)(sequence+i));
       current_sequence = _mm_and_si128(current_sequence,kmer_mask);
       comparison_result = _mm_cmpeq_epi8(current_sequence,kmer_vector);
       magic_return = _mm_movemask_epi8(comparison_result);
