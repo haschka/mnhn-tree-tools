@@ -8,7 +8,7 @@
 ```
 sudo apt-get install git build-essential libpng-dev libsdl2-dev liblapack-dev libopenmpi-dev libpocl-dev ocl-icd-opencl-dev pocl-opencl-icd
 
-git clone https://gitlab.in2p3.fr/mnhn-tools/mnhn-tree-tools.git
+git clone https://github.com/haschka/mnhn-tree-tools
 
 cd mnhn-tree-tools
 mkdir bin
@@ -46,5 +46,4 @@ folder.
 * Flaws
 
 Currently only works on 64 bit machines where size_t and pointers are 64bits
-long. The `kmer2pca` tool currently requires a machine supporting the AVX 
-instruction set. 
+long.
