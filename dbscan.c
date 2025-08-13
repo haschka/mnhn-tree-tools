@@ -1066,19 +1066,24 @@ void* adaptive_dbscan_thread(void* arg) {
   float epsilon;
   int index;
 
+  int do_stop;
+  
   split_set current_split_set;
   
   while(1) {
 
-    if(th->stop[0]) {
+    pthread_mutex_lock(th->lock_stop);
+    do_stop = th->stop[0];
+    pthread_mutex_unlock(th->lock_stop);
+      
+
+    if(do_stop) {
       goto finish;
     }
     
-    pthread_mutex_lock(th->lock_eps);
-    
+    pthread_mutex_lock(th->lock_eps);    
     epsilon = th->epsilon_now[0];
     th->epsilon_now[0] = th->epsilon_now[0] + th->epsilon_inc;
-  
     pthread_mutex_unlock(th->lock_eps);
 
     current_split_set.n_clusters = 0;
@@ -1301,7 +1306,8 @@ void adaptive_dbscan(
 
   pthread_mutex_destroy(lock_stop);
   pthread_mutex_destroy(lock_eps);
-
+  pthread_mutex_destroy(lock_split_sets);
+  
   count = 0;
   
   for(i=1;i<=th->stopindex[0];i++) {
