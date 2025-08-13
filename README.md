@@ -2,7 +2,7 @@
 
 * Please note that there is full manual with detailed build and usage 
   instruction as well as a tutorial available at
-  https://gitlab.in2p3.fr/mnhn-tools/mnhn-tree-tools-manual/-/blob/master/manual.pdf
+  https://github.com/haschka/mnhn-tree-tools-manual/blob/master/manual.pdf
 
 # How to build (Debain 10 / Ubuntu 20.04  with standard non optimzed libraries)
 ```
