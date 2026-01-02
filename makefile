@@ -4,8 +4,8 @@ MPICC=mpicc
 #CFLAGS=-g -march=native -fsanitize=address 
 #CFLAGS= -g -O1 -march=native -ftree-vectorize
 #CFLAGS= -O3 -mcpu=750 -mtune=750 -fomit-frame-pointer 
-CFLAGS=-O3 -ftree-loop-linear -ftree-vectorize -march=arrowlake-s -mabm -mno-cldemote -mno-kl -mno-pconfig -mno-sgx -mno-widekl -mwbnoinvd --param=l1-cache-line-size=64 --param=l1-cache-size=32 --param=l2-cache-size=30720
-#CFLAGS= -O2 -march=native -ftree-vectorize -fomit-frame-pointer 
+#CFLAGS= -O3 -ftree-loop-linear -ftree-vectorize -march=arrowlake-s -mabm -mno-cldemote -mno-kl -mno-pconfig -mno-sgx -mno-widekl -mwbnoinvd --param=l1-cache-line-size=64 --param=l1-cache-size=32 --param=l2-cache-size=30720
+CFLAGS= -O2 -march=native -ftree-vectorize -fomit-frame-pointer 
 LAPACK=-llapack
 MATH=-lm
 PTHREAD=-pthread
